@@ -3,17 +3,21 @@
 #include <sourcemod>
 #include <string>
 #include <sdktools>
-#include <TF2>
+#include <tf2>
 #include <sdkhooks>
 #include <tf2_stocks>
+#include <adt_trie>
+
+#define TEST_MODE 1
 
 
 #define RED_TEAM 2
 #define BLU_TEAM 3
 
+
 //in tf2_stocks
 #define TF2_PLAYERCOND_DISGUISING			(1<<2)
-#define TF2_PLAYERCOND_DISGUISED    	(1<<3)
+#define TF2_PLAYERCOND_DISGUISED    	    (1<<3)
 #define TF2_PLAYERCOND_SPYCLOAK				(1<<4) 
 
  
@@ -24,6 +28,7 @@
 new DrinkListStart[MAXPLAYERS + 1];
 new TotalDrinks[MAXPLAYERS + 1];
 new BuildingDrinks[MAXPLAYERS + 1];
+new DeadRingerDrinks[MAXPLAYERS + 1];
 new Handle:Weapons = INVALID_HANDLE;
 new Handle:BalanceTimer = INVALID_HANDLE;
 
@@ -33,8 +38,8 @@ enum Eweapon
 	wepName[40],
 };
 
-
-new String:UpdateDate[] = "3/6/2012";
+//Stinky Pete's half-birthday!
+new String:UpdateDate[] = "10/29/2014";
 new Handle:db = INVALID_HANDLE;
 
 new String: msgColor[] = "\x04[DG]";
@@ -63,7 +68,7 @@ public OnPluginStart()
 	HookEvent("object_destroyed",SentryDeath);
 	HookEvent("player_spawn",Event_PlayerSpawn);
 	HookEvent("player_changename",Change_Name);
-	HookEvent("teamplay_round_start",Round_Start)
+	HookEvent("teamplay_round_start",Round_Start);
 	RegConsoleCmd("say",Command_Say);
 	RegConsoleCmd("dg_update",Update);
 	RegConsoleCmd("dg_reloadmelee",LoadWepMults);
@@ -79,7 +84,7 @@ public OnPluginStart()
 	//For findtarget
 	LoadTranslations("common.phrases");
 	
-	LoadSQL();
+	//LoadSQL();
 	LoadWepMults(0,0);
 	
 	
@@ -98,11 +103,14 @@ public OnPluginEnd() {
 }
 
 public OnConfigsExecuted() {
+    if(TEST_MODE) return;
 	PrecacheSound("vo/burp05.wav");
 	
 }
 
+
 public OnMapStart() {
+    if(TEST_MODE) return;
 	PrecacheGeneric(DG_SPRITE_RED_VMT, true);
 	AddFileToDownloadsTable(DG_SPRITE_RED_VMT);
 	PrecacheGeneric(DG_SPRITE_RED_VTF, true);
@@ -115,7 +123,8 @@ public OnMapStart() {
 }
 
 public LoadSQL() {
-	
+    
+	if(TEST_MODE) return;
 	new String:error[255]
 	db = SQL_Connect("DGGame", true, error, sizeof(error))
 	
@@ -128,14 +137,14 @@ public LoadSQL() {
 
 }
 public Action:LoadWepMults(client,args) {
-	
+	if(TEST_MODE) return Plugin_Handled ;
 	if (Weapons != INVALID_HANDLE)
 		CloseHandle(Weapons);
-	
+	 
 	SQL_LockDatabase(db);
 	new Handle:query = SQL_Query(db, "SELECT weapon,mult FROM dgwepmults");
 	SQL_UnlockDatabase(db);
-	Weapons = CreateArray(ByteCountToCells(SQL_GetRowCount(query)));
+	Weapons = CreateTrie();
 	
 	
 	while (SQL_FetchRow(query))
@@ -144,7 +153,7 @@ public Action:LoadWepMults(client,args) {
 		
 		SQL_FetchString(query, 0, weaponinfo[wepName], sizeof(weaponinfo[wepName]));
 		weaponinfo[wepMult] = SQL_FetchInt(query,1);
-		PushArrayArray(Weapons,weaponinfo[0]);
+		SetTrieValue(Weapons,weaponinfo[wepName],weaponinfo[0]);
 	}
 	
 	
@@ -269,6 +278,10 @@ public Action:Command_Say(client,args) {
 			ShowMOTDPanel(client,"DG Rules",forumPost,MOTDPANEL_TYPE_URL);
 		else if (StrContains(text, "why do you have",false) != -1)
 			ShowMOTDPanel(client,"DG Rules",forumPost,MOTDPANEL_TYPE_URL);
+		else if (StrContains(text, "how to",false) != -1)
+			ShowMOTDPanel(client,"DG Rules",forumPost,MOTDPANEL_TYPE_URL);
+		else if (StrContains(text, "how do",false) != -1)
+			ShowMOTDPanel(client,"DG Rules",forumPost,MOTDPANEL_TYPE_URL);
 		
 		
 	}
@@ -299,9 +312,7 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 	new flags = 0;
 	if (!buildingDeath) {
 		flags = GetEventInt(event,"death_flags")
-		//If dead ringer then exit this method
-		if (flags & TF_DEATHFLAG_DEADRINGER )
-			return
+		
 		//Only kill the sprite if its a player death
 		KillSprite(GetClientOfUserId(GetEventInt(event, "userid")));
 	}
@@ -363,14 +374,14 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 	if (GetEventInt(event,"damagebits") & DMG_VEHICLE) {
 		TotalDrinks[victim] += 6;
 		PrintCenterText(victim,"DRINK SIX BITCH");
-		PrintToChat(victim,"%sYou're an idiot, drink 6",msgColor);	
+		PrintToChat(victim,"%sDon't get disTRACKted, drink 6",msgColor);	
 		EmitSoundToClient(victim,"vo/burp05.wav");
 		
 		//Update to the train killed you
 		Update_DG_DB(victim,0,victim,6,0,6,"train");
 		
 		//Display the window
-		DrawPanelText(myPanel,"[+6]You got run over by the train");
+		DrawPanelText(myPanel,"[+6]You got run over by a train");
 		DrawPanelText(myPanel,"--------------------------------");
 		DrawPanelText(myPanel,"Total: 6");
 		DrawPanelText(myPanel," ");
@@ -415,8 +426,24 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 	
 	
 	//Exit if attacker and assiter aren't dgin display building deaths if need be
+	//or dead ringer deaths
 	if (!atDG && !asDG) {
-		if (BuildingDrinks[victim] > 0) {
+	    if (DeadRingerDrinks[victim] > 0) {
+		    
+			Format(panelBuffer,sizeof(panelBuffer),"[+%d]You would have drank at time of fake death(s)",DeadRingerDrinks[victim]);
+			DrawPanelText(myPanel,panelBuffer);
+			DrawPanelText(myPanel,"--------------------------------");
+			Format(panelBuffer,sizeof(panelBuffer),"Total: %d",DeadRingerDrinks[victim]);
+			DrawPanelText(myPanel, panelBuffer);
+			DrawPanelText(myPanel," ");
+			Format(panelBuffer,sizeof(panelBuffer),"Total drinks this round: %d",TotalDrinks[victim]);
+			DrawPanelText(myPanel,panelBuffer);
+			DrawPanelItem(myPanel,"Close");
+			SendPanelToClient(myPanel,victim,MenuHandler1,5);		
+			CloseHandle(myPanel);
+			DeadRingerDrinks[victim] = 0;
+		} 
+		else if (BuildingDrinks[victim] > 0) {
 			PrintCenterText(victim,"DRINK %d BITCH", BuildingDrinks[victim]);
 			PrintToChat(victim,"%sYour buildings were killed last life drink %d",msgColor, BuildingDrinks[victim]);
 			
@@ -436,6 +463,7 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 			CloseHandle(myPanel);
 			BuildingDrinks[victim] = 0;
 		}
+		
 		return;
 	}
 	
@@ -457,14 +485,15 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 
 	if (buildingDeath) {
 		TotalDrinks[victim] += 1;
-		BuildingDrinks[victim] +=1;
-		Update_DG_DB(atDG ? attacker : 0, asDG ? assister : 0, victim, 1, 1 ,1 , WeaponName);
+		BuildingDrinks[victim] += 1;
+		//should this update for dead ringer coward deaths?
+		Update_DG_DB(atDG ? attacker : 0, asDG ? assister : 0, victim, 1, 1, 1, WeaponName);
 		
 		PrintToChat(attacker, "%sYou made %s drink %d. Good job!",msgColor, vicName, 1 );
 		if (asDG)
 			PrintToChat(assister,"%sYou made %s drink %d. Good job!",msgColor, vicName, 1 );
-	}
-	else {
+	} else 
+	{
 		
 		new drinkCount = 0;
 		new atDrinkCount = 0;
@@ -499,7 +528,7 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 			//Add one to both because the both helped with this one
 			asDrinkCount+=1;
 			atDrinkCount+=1;
-			drinkCount += 1;
+			drinkCount  +=1;
 			DrawPanelText(myPanel,"[+1] Drinker synergy bonus drink");
 		}
 		
@@ -544,8 +573,26 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 		
 		//Display how many drinks that have to take for their building deaths
 		if (BuildingDrinks[victim] > 0) {
+		    drinkCount += BuildingDrinks[victim];
 			StrCat(reason,sizeof(reason),", [DG] killed your buildings last life");
 			Format(panelBuffer,sizeof(panelBuffer),"[+%d]Your buildings were killed that life",BuildingDrinks[victim]);
+			DrawPanelText(myPanel,panelBuffer);
+		}
+	
+	    if (flags & TF_DEATHFLAG_DEADRINGER ) {
+	        DeadRingerDrinks[victim] += drinkCount;
+	        Format(panelBuffer,sizeof(panelBuffer),"...but you were dead ringing");
+			DrawPanelText(myPanel,panelBuffer);
+	        //because fake death
+	        return;
+	    }
+	
+	    //Display how many drinks that have to take for their fake deaths
+		if (DeadRingerDrinks[victim] > 0) {
+		    //a victim of his own deception
+		    drinkCount += DeadRingerDrinks[victim];
+			StrCat(reason,sizeof(reason),", you pretended to be killed by [DG]");
+			Format(panelBuffer,sizeof(panelBuffer),"[+%d]You would have drank at time of fake death(s)",DeadRingerDrinks[victim]);
 			DrawPanelText(myPanel,panelBuffer);
 		}
 	
@@ -555,16 +602,17 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 			ReplaceString(reason[idx],sizeof(reason),","," and")
 		
 		//Print out all this info to the victim
-		PrintCenterText(victim,"%s DRINK %d BITCH",attaunt, drinkCount + BuildingDrinks[victim]);
-		PrintToChat(victim,"%sYou were %s drink %d",msgColor, reason, drinkCount + BuildingDrinks[victim]);
+		PrintCenterText(victim,"%s DRINK %d BITCH",attaunt, drinkCount);
+		PrintToChat(victim,"%sYou were %s drink %d",msgColor, reason, drinkCount);
 			
 		PrintToChat(attacker, "%sYou made %s drink %d. Good job!",msgColor, vicName,drinkCount);
 		if (asDG)
 			PrintToChat(assister,"%sYou made %s drink %d. Good job!",msgColor, vicName,drinkCount);
-
-		EmitSoundToClient(victim,"vo/burp05.wav");
+        if(!TEST_MODE) {
+		    EmitSoundToClient(victim,"vo/burp05.wav");
 		
-		Update_DG_DB(atDG ? attacker : 0, asDG ? assister : 0, victim, atDrinkCount, asDrinkCount,drinkCount, WeaponName);
+		    Update_DG_DB(atDG ? attacker : 0, asDG ? assister : 0, victim, atDrinkCount, asDrinkCount,drinkCount, WeaponName);
+        }
 		TotalDrinks[victim] += drinkCount;
 		
 		DrawPanelText(myPanel,"--------------------------------");
@@ -581,27 +629,27 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 
 	if (!buildingDeath) //Means victim died, reset their building destroys
 		BuildingDrinks[victim] = 0;
+		
+	if (!(flags & TF_DEATHFLAG_DEADRINGER )) //Means victim wasn't faking, reset their faker status
+        DeadRingerDrinks[victim] = 0;
 
 	
 }
 
 public getDrinkCount(name[]) {
-	//Make sure not to read a bad array
+    if(TEST_MODE) return 3;
+	//Make sure not to read a bad map
 	if (Weapons != INVALID_HANDLE) {
-		for (new i = 0; i < GetArraySize(Weapons); i++) {
-			new weapon[Eweapon];
-			GetArrayArray(Weapons,i,weapon[0]);
-			
-			if (StrEqual(weapon[wepName],name)) {
-				return weapon[wepMult];
-			}
-		}
+	    new wepBonus = 0;
+	    GetTrieValue(Weapons,name,wepBonus);
+		return wepBonus;
 	}
 	return 0;
 }
 
 
 public Event_PlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast) {
+    if(TEST_MODE) return;
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));
 	new String:playerName[32];
 	GetClientName(client, playerName,sizeof(playerName));
@@ -633,7 +681,7 @@ public Action:SetTransmit(entity, client) {
 	}
 	
 	
-	//If its a spy disguising or disguisted or cloaked don't show it
+	//If its a spy disguising or disguised or cloaked don't show it
 	if (playerLookingAt > 0) {
 		if (GetEntProp(playerLookingAt, Prop_Send, "m_nPlayerCond") & (TF2_PLAYERCOND_DISGUISING|TF2_PLAYERCOND_DISGUISED|TF2_PLAYERCOND_SPYCLOAK))
 			return Plugin_Handled;
@@ -674,7 +722,7 @@ public Change_Name(Handle:event, const String:name[], bool:dontBroadcast)
 		return;
 	
 	//If they have started DGin
-	if (dg) {
+	if (dg && !TEST_MODE) {
 		if (GetClientTeam(client) == RED_TEAM)
 			CreateSprite(client,DG_SPRITE_RED_VMT);
 		else if (GetClientTeam(client) == BLU_TEAM)
@@ -727,6 +775,7 @@ public Event_Round_Win(Handle:event, const String:name[], bool:dontBroadcast) {
 			//See if HuntersPlaying
 			new String:SteamID[32];
 			GetClientAuthString(i,SteamID,sizeof(SteamID));
+			//lolwut
 			if (StrEqual(SteamID,"STEAM_0:1:6219443",false))
 				GetYaDikSuk = true;
 			
@@ -736,14 +785,38 @@ public Event_Round_Win(Handle:event, const String:name[], bool:dontBroadcast) {
 			if (GetClientTeam(i) != team)
 				PrintCenterText(i,"Your team lost! Drink bitch");
 		}
-		
-		if (BuildingDrinks[i] > 0) {
+		if (DeadRingerDrinks[i] > 0) {
+			PrintCenterText(i,"DRINK %d BITCH", DeadRingerDrinks[i]);
+			PrintToChat(i,"%sYou were dead ringing you cheeky git %d",msgColor, BuildingDrinks[i]);
+			
+			new Handle:myPanel = CreatePanel();
+			new String:panelBuffer[100];
+			if(!TEST_MODE){
+			    EmitSoundToClient(i,"vo/burp05.wav");
+			}
+			//Display the window
+			Format(panelBuffer,sizeof(panelBuffer),"[+%d]You would have drank at time of fake death(s)",DeadRingerDrinks[i]);
+			DrawPanelText(myPanel,panelBuffer);
+			DrawPanelText(myPanel,"--------------------------------");
+			Format(panelBuffer,sizeof(panelBuffer),"Total: %d",BuildingDrinks[i]);
+			DrawPanelText(myPanel, panelBuffer);
+			DrawPanelText(myPanel," ");
+			Format(panelBuffer,sizeof(panelBuffer),"Total drinks this round: %d",TotalDrinks[i]);
+			DrawPanelText(myPanel,panelBuffer);
+			DrawPanelItem(myPanel,"Close");
+			SendPanelToClient(myPanel,i,MenuHandler1,5);		
+			CloseHandle(myPanel);
+			BuildingDrinks[i] = 0;
+		}
+		else if (BuildingDrinks[i] > 0) {
 			PrintCenterText(i,"DRINK %d BITCH", BuildingDrinks[i]);
 			PrintToChat(i,"%sYour buildings were killed last life drink %d",msgColor, BuildingDrinks[i]);
 			
 			new Handle:myPanel = CreatePanel();
 			new String:panelBuffer[100];
-			EmitSoundToClient(i,"vo/burp05.wav");
+			if(!TEST_MODE){
+			    EmitSoundToClient(i,"vo/burp05.wav");
+			}
 			//Display the window
 			Format(panelBuffer,sizeof(panelBuffer),"[+%d]Your buildings were killed that life",BuildingDrinks[i]);
 			DrawPanelText(myPanel,panelBuffer);
@@ -758,7 +831,6 @@ public Event_Round_Win(Handle:event, const String:name[], bool:dontBroadcast) {
 			CloseHandle(myPanel);
 			BuildingDrinks[i] = 0;
 		}
-
 	}
 	
 	
@@ -784,7 +856,7 @@ public OnClientDisconnect(client) {
 }
  
 public bool:SetTaunt(String:steamID[], String:taunt[]) {
-	
+	if(TEST_MODE) return false;
 	//Change it to uppercase
 	StringToUpper(taunt);
 	//Change single quotes to 2 single quotes
@@ -986,7 +1058,7 @@ public sortDrinks(elem1, elem2, const array[],Handle:hndl) {
 }
  
 public GetTaunt(String:steamID[32], String:buf[], bufLen, bool:returnError) {
-	
+	if(TEST_MODE) strcopy(buf,bufLen,"LOOOOL TEST MODE");
 	new String:rtn[100] = "";
 	
 	//Return if the db is closed
@@ -1015,7 +1087,7 @@ public GetTaunt(String:steamID[32], String:buf[], bufLen, bool:returnError) {
 
 public Update_DG_DB(attacker, assister, victim, at_drinks, as_drinks, vic_drinks, String: weapon[]) {
 	//Return if the db is closed
-	if (db == INVALID_HANDLE)
+	if (db == INVALID_HANDLE || TEST_MODE)
 		return;
 	
 	new String:atName[100] = "NULL";
@@ -1485,7 +1557,7 @@ public tellCodeMonkey(const String:tellWhat[]) {
 		
 		GetClientAuthString(i,steam,sizeof(steam));
 		if (StrEqual(steam,"STEAM_0:0:20604342",false)) {
-			PrintCenterText(i,"LOOK AT CHAT THERES AN ERROR");
+			PrintCenterText(i,"OMG LOOK AT CHAT THERES AN ERROR");
 			PrintToChat(i,"%s%s",msgColor,tellWhat);
 		}
 		
