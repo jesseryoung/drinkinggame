@@ -84,7 +84,7 @@ public OnPluginStart()
 	//For findtarget
 	LoadTranslations("common.phrases");
 	
-	//LoadSQL();
+	LoadSQL();
 	LoadWepMults(0,0);
 	
 	
