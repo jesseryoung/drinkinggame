@@ -1,0 +1,73 @@
+-- --------------------------------------------------------------------------------
+-- Routine DDL
+-- Note: comments before and after the routine body will not be stored by the server
+-- --------------------------------------------------------------------------------
+DELIMITER $$
+
+CREATE DEFINER=`codemonkey`@`%` PROCEDURE `add_drinks`(
+IN attack_name VARCHAR(50) CHARACTER SET utf8,
+IN attack_steam_id VARCHAR(50),
+IN assist_name VARCHAR(50) CHARACTER SET utf8,
+IN assist_steam_id VARCHAR(50),
+IN victim_name VARCHAR(50) CHARACTER SET utf8,
+IN victim_steam_id VARCHAR(50),
+IN weapon VARCHAR(45),
+IN attack_drinks INT(11),
+IN assist_drinks INT(11),
+IN victim_drinks INT(11)
+)
+BEGIN
+
+DECLARE at_id int default -1;
+DECLARE as_id int default -1;
+DECLARE dcg int DEFAULT 0;
+
+#If there was an attacker
+IF attack_steam_id IS NOT NULL AND CHAR_LENGTH(attack_steam_id) > 0 THEN
+    #See if you can't find an id for this person
+    SELECT player_id INTO at_id FROM dg_players WHERE Steam_ID = attack_steam_id;
+    #If you cant add them
+    IF at_id = -1 THEN
+        INSERT INTO dg_players (Steam_ID, last_recorded_name) VALUES (attack_steam_id, convert(attack_name using utf8));
+        SET at_id = LAST_INSERT_ID();
+    ELSE
+        #Update their name
+        UPDATE dg_players SET last_recorded_name = convert(attack_name using utf8) where player_id = at_id;
+    END IF;
+    
+    
+    #Insert or update the respective values
+    INSERT INTO dg_weapon_drinks (player_id, weapon, drink_count, killed_count)
+        VALUES(at_id, weapon, attack_drinks, 1)
+        ON DUPLICATE KEY UPDATE drink_count = drink_count + attack_drinks, killed_count = killed_count +1;
+END IF;
+
+#Same as before but with the assister 
+IF assist_steam_id IS NOT NULL AND CHAR_LENGTH(assist_steam_id) > 0 THEN
+    SELECT player_id INTO as_id FROM dg_players WHERE Steam_ID = assist_steam_id;
+    IF as_id = -1 THEN
+        INSERT INTO dg_players (Steam_ID, last_recorded_name) VALUES (assist_steam_id, convert(assist_name using utf8));
+        SET as_id = LAST_INSERT_ID();
+    ELSE
+        #Update their name
+        UPDATE dg_players SET last_recorded_name = convert(assist_name using utf8) where player_id = as_id;
+    END IF;
+    
+    
+    INSERT INTO dg_assister_drinks (player_id, drink_count, killed_count)
+        VALUES(as_id, assist_drinks, 1)
+        ON DUPLICATE KEY UPDATE drink_count = drink_count + assist_drinks, killed_count = killed_count +1;
+END IF;
+
+#if no attacker or assister then its a dcg drink
+IF at_id = -1 and as_id = -1 THEN
+    SET dcg = victim_drinks;
+    SET victim_drinks = 0;
+END IF;
+
+#Update the victims values in the dg_players table
+INSERT INTO dg_players (Steam_ID, last_recorded_name, drinks, drinks_dcg)
+    VALUES (victim_steam_id, convert(victim_name using utf8), victim_drinks, dcg)
+    ON DUPLICATE KEY update last_recorded_name = convert(victim_name using utf8), drinks = drinks + victim_drinks, drinks_dcg = drinks_dcg + dcg;
+
+END
