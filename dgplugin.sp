@@ -183,7 +183,7 @@ public Action:RandomDG(client, args) {
 		
 		
 		//Get player Name
-		new String:playerName[32];
+		new String:playerName[64];
 		GetClientName(i, playerName,sizeof(playerName));
 		
 		
