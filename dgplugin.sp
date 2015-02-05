@@ -183,7 +183,7 @@ public Action:RandomDG(client, args) {
 		
 		
 		//Get player Name
-		new String:playerName[32];
+		new String:playerName[64];
 		GetClientName(i, playerName,sizeof(playerName));
 		
 		
@@ -787,7 +787,7 @@ public Event_Round_Win(Handle:event, const String:name[], bool:dontBroadcast) {
 		}
 		if (DeadRingerDrinks[i] > 0) {
 			PrintCenterText(i,"DRINK %d BITCH", DeadRingerDrinks[i]);
-			PrintToChat(i,"%sYou were dead ringing you cheeky git %d",msgColor, BuildingDrinks[i]);
+			PrintToChat(i,"%sYou were dead ringing you cheeky git %d",msgColor, DeadRingerDrinks[i]);
 			
 			new Handle:myPanel = CreatePanel();
 			new String:panelBuffer[100];
@@ -798,7 +798,7 @@ public Event_Round_Win(Handle:event, const String:name[], bool:dontBroadcast) {
 			Format(panelBuffer,sizeof(panelBuffer),"[+%d]You would have drank at time of fake death(s)",DeadRingerDrinks[i]);
 			DrawPanelText(myPanel,panelBuffer);
 			DrawPanelText(myPanel,"--------------------------------");
-			Format(panelBuffer,sizeof(panelBuffer),"Total: %d",BuildingDrinks[i]);
+			Format(panelBuffer,sizeof(panelBuffer),"Total: %d",DeadRingerDrinks[i]);
 			DrawPanelText(myPanel, panelBuffer);
 			DrawPanelText(myPanel," ");
 			Format(panelBuffer,sizeof(panelBuffer),"Total drinks this round: %d",TotalDrinks[i]);
@@ -806,7 +806,7 @@ public Event_Round_Win(Handle:event, const String:name[], bool:dontBroadcast) {
 			DrawPanelItem(myPanel,"Close");
 			SendPanelToClient(myPanel,i,MenuHandler1,5);		
 			CloseHandle(myPanel);
-			BuildingDrinks[i] = 0;
+			DeadRingerDrinks[i] = 0;
 		}
 		else if (BuildingDrinks[i] > 0) {
 			PrintCenterText(i,"DRINK %d BITCH", BuildingDrinks[i]);
