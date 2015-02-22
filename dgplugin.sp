@@ -187,7 +187,7 @@ public Action:RandomDG(client, args) {
 		GetClientName(i, playerName,sizeof(playerName));
 		
 		
-		if (StrContains(playerName,"[DG]",false) != -1 || StrContains(playerName,"[DCG]",false) != -1)
+		if ((StrContains(playerName,"[DG]",false) != -1 || StrContains(playerName,"[DCG]",false) != -1) || (StrContains(playerName,"[SG]",false) != -1 || StrContains(playerName,"[SCG]",false) != -1))
 			continue;
 		
 		
@@ -334,10 +334,10 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 	GetClientName(assister, assistName,sizeof(assistName))
 	
 	//See whos playin DG
-	new bool:vicDCG = ((StrContains(vicName,"[DCG]",false) != -1));
-	new bool:vicDG = ((StrContains(vicName,"[DG]",false) != -1));
-	new bool:atDG = ((StrContains(attackName,"[DG]",false) != -1) || (StrContains(attackName,"[DCG]",false) != -1));
-	new bool:asDG = ((StrContains(assistName,"[DG]",false) != -1) || (StrContains(assistName,"[DCG]",false) != -1));
+	new bool:vicDCG = (((StrContains(vicName,"[DCG]",false) != -1)) || ((StrContains(vicName,"[SCG]",false) != -1)));
+	new bool:vicDG = (((StrContains(vicName,"[DG]",false) != -1)) || ((StrContains(vicName,"[SG]",false) != -1)));
+	new bool:atDG = (((StrContains(attackName,"[DG]",false) != -1) || (StrContains(attackName,"[DCG]",false) != -1)) || ((StrContains(attackName,"[SG]",false) != -1) || (StrContains(attackName,"[SCG]",false) != -1)));
+	new bool:asDG = (((StrContains(assistName,"[DG]",false) != -1) || (StrContains(assistName,"[DCG]",false) != -1)) || ((StrContains(assistName,"[SG]",false) != -1) || (StrContains(assistName,"[SCG]",false) != -1)));
 	
 
 	//Exit if vic isn't DGin
@@ -562,11 +562,12 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 			DrawPanelText(myPanel,panelBuffer);
 		}
 		
-		//Double for assiter domination
+		//Double for assister domination
+		//Double for codemonkey's bad spelling as well
 		if (asDomRev && asDG) {
 			drinkCount += 2;
 			asDrinkCount+=2;
-			StrCat(reason,sizeof(reason),", [DG] assiter dominated/revenged you");
+			StrCat(reason,sizeof(reason),", [DG] assister dominated/revenged you");
 			Format(panelBuffer,sizeof(panelBuffer),"[+2]You were dominated/revenged by %s",assistName);
 			DrawPanelText(myPanel,panelBuffer);
 		}
@@ -655,7 +656,7 @@ public Event_PlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast) 
 	GetClientName(client, playerName,sizeof(playerName));
 	
 	//If they are DG'n put a sprite above their heads
-	if (StrContains(playerName,"[DG]",false) != -1 || StrContains(playerName,"[DCG]",false) != -1) {
+	if ((StrContains(playerName,"[DG]",false) != -1 || StrContains(playerName,"[DCG]",false) != -1) || (StrContains(playerName,"[SG]",false) != -1 || StrContains(playerName,"[SCG]",false) != -1)) {
 		if (GetClientTeam(client) == RED_TEAM)
 			CreateSprite(client,DG_SPRITE_RED_VMT);
 		else
@@ -696,7 +697,7 @@ public Action:SetTransmit(entity, client) {
 	GetClientName(client, playerName,sizeof(playerName));
 	
 	//Don't display to non DGers
-	if (StrContains(playerName,"[DG]",false) == -1 && StrContains(playerName,"[DCG]",false) == -1)
+	if ((StrContains(playerName,"[DG]",false) == -1 && StrContains(playerName,"[DCG]",false) == -1) || (StrContains(playerName,"[SG]",false) == -1 && StrContains(playerName,"[SCG]",false) == -1))
 		return Plugin_Handled;
 
 	
@@ -710,8 +711,8 @@ public Change_Name(Handle:event, const String:name[], bool:dontBroadcast)
 	decl String:newName[32]; GetEventString(event,"newname" , newName, sizeof(newName));
 	decl String:oldName[32]; GetEventString(event,"oldname" , oldName,sizeof(oldName));
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));
-	new bool:dg = (StrContains(newName,"[DG]",false) != -1 || StrContains(newName,"[DCG]",false) != -1);
-	new bool:wasDG = (StrContains(oldName,"[DG]",false) != -1 || StrContains(oldName,"[DCG]",false) != -1);
+	new bool:dg = ((StrContains(newName,"[DG]",false) != -1 || StrContains(newName,"[DCG]",false) != -1) || (StrContains(newName,"[SG]",false) != -1 || StrContains(newName,"[SCG]",false) != -1));
+	new bool:wasDG = ((StrContains(oldName,"[DG]",false) != -1 || StrContains(oldName,"[DCG]",false) != -1) || (StrContains(oldName,"[SG]",false) != -1 || StrContains(oldName,"[SCG]",false) != -1));
 	
 	//If they are dead don't worry about it it will be taken care of at spawn
 	if (!IsPlayerAlive(client))
@@ -770,7 +771,7 @@ public Event_Round_Win(Handle:event, const String:name[], bool:dontBroadcast) {
 		GetClientName(i, playerName,sizeof(playerName));
 		
 		
-		if (StrContains(playerName,"[DG]",false) != -1 || StrContains(playerName,"[DCG]",false) != -1){
+		if ((StrContains(playerName,"[DG]",false) != -1 || StrContains(playerName,"[DCG]",false) != -1) || (StrContains(playerName,"[SG]",false) != -1 || StrContains(playerName,"[SCG]",false) != -1)){
 			
 			//See if HuntersPlaying
 			new String:SteamID[32];
@@ -1192,7 +1193,7 @@ public bool:balanced() {
 		if (IsClientInGame(i)) {
 			new String:name[255];
 			GetClientName(i, name,sizeof(name));
-			if (StrContains(name,"[DG]",false) != -1 || StrContains(name,"[DCG]",false) != -1 ) {
+			if ((StrContains(name,"[DG]",false) != -1 || StrContains(name,"[DCG]",false) != -1 ) || (StrContains(name,"[SG]",false) != -1 || StrContains(name,"[SCG]",false) != -1 )) {
 				if (GetClientTeam(i) == BLU_TEAM)
 					BluDGers++;
 				else if (GetClientTeam(i) == RED_TEAM)
@@ -1223,7 +1224,7 @@ public Action:DGBalance(client1, args) {
 		if (IsClientInGame(i)) {
 			new String:name[255];
 			GetClientName(i, name,sizeof(name));
-			if (StrContains(name,"[DG]",false) != -1 || StrContains(name,"[DCG]",false) != -1) {
+			if ((StrContains(name,"[DG]",false) != -1 || StrContains(name,"[DCG]",false) != -1) || (StrContains(name,"[SG]",false) != -1 || StrContains(name,"[SCG]",false) != -1)) {
 				if (GetClientTeam(i) == BLU_TEAM) 
 					PushArrayCell(BluIndex,i);
 				else if (GetClientTeam(i) == RED_TEAM)
@@ -1351,7 +1352,7 @@ public CheckForBalance(client) {
 	GetClientName(client,name,sizeof(name));
 	
 	//If they are not DGing just return
-	if (StrContains(name,"[DG]",false) == -1 && StrContains(name,"[DCG]",false) == -1)
+	if ((StrContains(name,"[DG]",false) == -1 && StrContains(name,"[DCG]",false) == -1) || (StrContains(name,"[SG]",false) == -1 && StrContains(name,"[SCG]",false) == -1))
 		return;
 	
 	
@@ -1364,7 +1365,7 @@ public CheckForBalance(client) {
 		if (IsClientInGame(i)) {
 			new String:plrname[255];
 			GetClientName(i, plrname,sizeof(plrname));
-			if (StrContains(plrname,"[DG]",false) != -1 || StrContains(plrname,"[DCG]",false) != -1) {
+			if ((StrContains(plrname,"[DG]",false) != -1 || StrContains(plrname,"[DCG]",false) != -1) || (StrContains(plrname,"[SG]",false) != -1 || StrContains(plrname,"[SCG]",false) != -1)){
 				if (GetClientTeam(i) == BLU_TEAM) 
 					PushArrayCell(BluIndex,i);
 				else if (GetClientTeam(i) == RED_TEAM)
