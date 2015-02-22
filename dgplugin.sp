@@ -697,7 +697,7 @@ public Action:SetTransmit(entity, client) {
 	GetClientName(client, playerName,sizeof(playerName));
 	
 	//Don't display to non DGers
-	if ((StrContains(playerName,"[DG]",false) == -1 && StrContains(playerName,"[DCG]",false) == -1) || (StrContains(playerName,"[SG]",false) == -1 && StrContains(playerName,"[SCG]",false) == -1))
+	if ((StrContains(playerName,"[DG]",false) == -1 && StrContains(playerName,"[DCG]",false) == -1) && (StrContains(playerName,"[SG]",false) == -1 && StrContains(playerName,"[SCG]",false) == -1))
 		return Plugin_Handled;
 
 	
