@@ -35,7 +35,7 @@ new Handle:BalanceTimer = INVALID_HANDLE;
 enum Eweapon
 {
 	wepMult,
-	wepName[40],
+	String:wepName[40],
 };
 
 //Stinky Pete's half-birthday!
@@ -636,7 +636,7 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 	
 }
 
-public getDrinkCount(name[]) {
+public getDrinkCount(String:name[]) {
     if(TEST_MODE) return 3;
 	//Make sure not to read a bad map
 	if (Weapons != INVALID_HANDLE) {
