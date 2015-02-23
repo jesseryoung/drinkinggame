@@ -8,7 +8,7 @@
 #include <tf2_stocks>
 #include <adt_trie>
 
-#define TEST_MODE 0
+#define TEST_MODE 1
 
 
 #define RED_TEAM 2
