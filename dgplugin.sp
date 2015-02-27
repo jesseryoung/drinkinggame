@@ -245,7 +245,7 @@ public Action:Command_Say(client,args) {
 		else {
 			new String:taunt[50];
 			strcopy(taunt,51,text[nextCmd]);
-			if (SetTaunt(steamID,text[nextCmd])) {
+			if ((steamID,text[nextCmd])) {
 				GetTaunt(steamID,taunt,sizeof(taunt),true);
 				PrintToChat(client,"%staunt added: '%s'",msgColor,taunt)
 			} else
@@ -855,17 +855,26 @@ public OnClientDisconnect(client) {
 	KillSprite(client);
 }
  
+new Handle:hUpdateTaunt = INVALID_HANDLE;
+new Handle:hInsertTaunt = INVALID_HANDLE;
+
 public bool:SetTaunt(String:steamID[], String:taunt[]) {
 	if(TEST_MODE) return false;
 	//Change it to uppercase
 	StringToUpper(taunt);
-	//Change single quotes to 2 single quotes
-	ReplaceString(taunt,strlen(taunt), "'","''");
 	
-
 	//Return if the db is closed
 	if (db == INVALID_HANDLE)
 		return false;
+	
+	new String:error[255]
+	if (hUpdateTaunt == INVALID_HANDLE) {
+		hUpdateTaunt = SQL_PrepareQuery(db, "UPDATE DGtaunts SET taunt = ? WHERE Steam_ID = ?", error, sizeof(error));
+	}
+	if (hInsertTaunt == INVALID_HANDLE) {
+		hInsertTaunt = SQL_PrepareQuery(db, "INSERT INTO DGtaunts (Steam_ID, taunt) VALUES(?, ?)", error, sizeof(error));
+	}
+	
 	
 	//Create a query for the DB
 	new String:strQuery[500];
@@ -879,24 +888,36 @@ public bool:SetTaunt(String:steamID[], String:taunt[]) {
 		SQL_GetError(db,error,sizeof(error));
 		PrintToServer(error);
 		return false;
-		
 	//That means that a row exists, so use update
 	} else if(SQL_FetchRow(query)) {
-		Format(strQuery,sizeof(strQuery),"UPDATE DGtaunts SET taunt = '%s' WHERE Steam_ID = '%s'", taunt, steamID);
+		SQL_BindParamString(hUpdateTaunt, 0, taunt, false);
+		SQL_BindParamString(hUpdateTaunt, 1, steamID, false);
+		SQL_LockDatabase(db);
+		if (!SQL_Execute(hUpdateTaunt)) {
+			new String:error[100];
+			SQL_GetError(db,error,sizeof(error));
+			PrintToServer(error);
+			SQL_UnlockDatabase(db);
+			return false;
+		}
+		SQL_UnlockDatabase(db);
 	//Use insert
 	} else {
-		Format(strQuery,sizeof(strQuery),"INSERT INTO DGtaunts (Steam_ID, taunt) VALUES('%s', '%s')",steamID,taunt);
+		SQL_BindParamString(hInsertTaunt, 0, taunt, false);
+		SQL_BindParamString(hInsertTaunt, 1, steamID, false);
+		SQL_LockDatabase(db);
+		if (!SQL_Execute(hInsertTaunt)) {
+			new String:error[100];
+			SQL_GetError(db, error,sizeof(error));
+			PrintToServer(error);
+			SQL_UnlockDatabase(db);
+			return false;
+		}
+		SQL_UnlockDatabase(db);
+
 	}
 	
-	SQL_LockDatabase(db);
-	if (!SQL_FastQuery(db,strQuery)) {
-		new String:error[100];
-		SQL_GetError(db,error,sizeof(error));
-		PrintToServer(error);
-		SQL_UnlockDatabase(db);
-		return false;
-	}
-	SQL_UnlockDatabase(db);
+
 	
 	return true;
 }
@@ -1112,8 +1133,9 @@ public Update_DG_DB(attacker, assister, victim, at_drinks, as_drinks, vic_drinks
 	
 	
 	if (attacker != 0) {
-		GetClientName(attacker, atName,sizeof(atName)/2 - 2);
-		ReplaceString(atName,sizeof(atName), "'","''");
+		new String:buffer[48];
+		GetClientName(attacker, buffer, sizeof(buffer));
+		SQL_EscapeString(db, buffer, atName, sizeof(atName));
 		Format(atName, sizeof(atName),"'%s'",atName);
 		
 		
@@ -1121,19 +1143,19 @@ public Update_DG_DB(attacker, assister, victim, at_drinks, as_drinks, vic_drinks
 		Format(atSteam, sizeof(atSteam),"'%s'",atSteam);
 	}
 	if (assister != 0) {
-		
-
-		GetClientName(assister, asName,sizeof(asName)/2 - 2);
-		ReplaceString(asName,sizeof(asName), "'","''");
+		new String:buffer[48];
+		GetClientName(assister, buffer, sizeof(buffer));
+		SQL_EscapeString(db, buffer, asName, sizeof(asName));
 		Format(asName, sizeof(asName),"'%s'",asName);
 		
 		GetClientAuthString(assister,asSteam,sizeof(asSteam));
 		Format(asSteam, sizeof(asSteam),"'%s'",asSteam);
 	}
-	
-	GetClientName(victim, vicName,sizeof(vicName)/2 - 2);
-	ReplaceString(vicName,sizeof(vicName), "'","''");
+	new String:buffer[48];
+	GetClientName(victim, buffer, sizeof(buffer));
+	SQL_EscapeString(db, buffer, vicName, sizeof(vicName));
 	Format(vicName, sizeof(vicName),"'%s'",vicName);
+	
 
 	GetClientAuthString(victim,vicSteam,sizeof(vicSteam));
 	Format(vicSteam, sizeof(vicSteam),"'%s'",vicSteam);
