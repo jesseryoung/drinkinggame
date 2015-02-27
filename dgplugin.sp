@@ -245,7 +245,7 @@ public Action:Command_Say(client,args) {
 		else {
 			new String:taunt[50];
 			strcopy(taunt,51,text[nextCmd]);
-			if ((steamID,text[nextCmd])) {
+			if (SetTaunt(steamID,text[nextCmd])) {
 				GetTaunt(steamID,taunt,sizeof(taunt),true);
 				PrintToChat(client,"%staunt added: '%s'",msgColor,taunt)
 			} else
@@ -867,12 +867,20 @@ public bool:SetTaunt(String:steamID[], String:taunt[]) {
 	if (db == INVALID_HANDLE)
 		return false;
 	
-	new String:error[255]
+	
 	if (hUpdateTaunt == INVALID_HANDLE) {
+		new String:error[255];
 		hUpdateTaunt = SQL_PrepareQuery(db, "UPDATE DGtaunts SET taunt = ? WHERE Steam_ID = ?", error, sizeof(error));
+		if (hUpdateTaunt == INVALID_HANDLE){
+			tellCodeMonkey(error);
+		}
 	}
 	if (hInsertTaunt == INVALID_HANDLE) {
-		hInsertTaunt = SQL_PrepareQuery(db, "INSERT INTO DGtaunts (Steam_ID, taunt) VALUES(?, ?)", error, sizeof(error));
+		new String:error[255];
+		hInsertTaunt = SQL_PrepareQuery(db, "INSERT INTO DGtaunts (taunt, Steam_ID) VALUES(?, ?)", error, sizeof(error));
+		if (hInsertTaunt == INVALID_HANDLE){
+			tellCodeMonkey(error);
+		}
 	}
 	
 	
@@ -896,7 +904,7 @@ public bool:SetTaunt(String:steamID[], String:taunt[]) {
 		if (!SQL_Execute(hUpdateTaunt)) {
 			new String:error[100];
 			SQL_GetError(db,error,sizeof(error));
-			PrintToServer(error);
+			tellCodeMonkey(error);
 			SQL_UnlockDatabase(db);
 			return false;
 		}
@@ -909,7 +917,7 @@ public bool:SetTaunt(String:steamID[], String:taunt[]) {
 		if (!SQL_Execute(hInsertTaunt)) {
 			new String:error[100];
 			SQL_GetError(db, error,sizeof(error));
-			PrintToServer(error);
+			tellCodeMonkey(error);
 			SQL_UnlockDatabase(db);
 			return false;
 		}
