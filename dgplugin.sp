@@ -1141,29 +1141,15 @@ public Update_DG_DB(attacker, assister, victim, at_drinks, as_drinks, vic_drinks
 	
 	
 	if (attacker != 0) {
-		new String:buffer[48];
-		GetClientName(attacker, buffer, sizeof(buffer));
-		SQL_EscapeString(db, buffer, atName, sizeof(atName));
-		Format(atName, sizeof(atName),"'%s'",atName);
-		
 		
 		GetClientAuthString(attacker,atSteam,sizeof(atSteam));
 		Format(atSteam, sizeof(atSteam),"'%s'",atSteam);
 	}
 	if (assister != 0) {
-		new String:buffer[48];
-		GetClientName(assister, buffer, sizeof(buffer));
-		SQL_EscapeString(db, buffer, asName, sizeof(asName));
-		Format(asName, sizeof(asName),"'%s'",asName);
 		
 		GetClientAuthString(assister,asSteam,sizeof(asSteam));
 		Format(asSteam, sizeof(asSteam),"'%s'",asSteam);
 	}
-	new String:buffer[48];
-	GetClientName(victim, buffer, sizeof(buffer));
-	SQL_EscapeString(db, buffer, vicName, sizeof(vicName));
-	Format(vicName, sizeof(vicName),"'%s'",vicName);
-	
 
 	GetClientAuthString(victim,vicSteam,sizeof(vicSteam));
 	Format(vicSteam, sizeof(vicSteam),"'%s'",vicSteam);
