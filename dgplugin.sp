@@ -104,7 +104,7 @@ public OnPluginEnd() {
 
 public OnConfigsExecuted() {
     if(TEST_MODE) return;
-	PrecacheSound("vo/burp05.wav");
+	PrecacheSound("vo/burp05.mp3");
 	
 }
 
@@ -353,7 +353,7 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 		TotalDrinks[victim] += 2;
 		PrintCenterText(victim,"DRINK TWO BITCH");
 		PrintToChat(victim,"%sYou're an idiot, drink 2",msgColor);	
-		EmitSoundToClient(victim,"vo/burp05.wav");
+		EmitSoundToClient(victim,"vo/burp05.mp3");
 		
 		//Update to the fact you killed yourself
 		Update_DG_DB(victim,0,victim,2,0,2,WeaponName);
@@ -375,7 +375,7 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 		TotalDrinks[victim] += 6;
 		PrintCenterText(victim,"DRINK SIX BITCH");
 		PrintToChat(victim,"%sDon't get disTRACKted, drink 6",msgColor);	
-		EmitSoundToClient(victim,"vo/burp05.wav");
+		EmitSoundToClient(victim,"vo/burp05.mp3");
 		
 		//Update to the train killed you
 		Update_DG_DB(victim,0,victim,6,0,6,"train");
@@ -410,7 +410,7 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 		Format(say, sizeof(say),"%s killed you, drink %d", attackName, 1);
 		
 		//EmitSoundToClient(victim,"misc/bottle-open-1.mp3");
-		EmitSoundToClient(victim,"vo/burp05.wav");
+		EmitSoundToClient(victim,"vo/burp05.mp3");
 		//Display the window
 		DrawPanelText(myPanel,"[+1]You were killed while DCGing");
 		DrawPanelText(myPanel,"--------------------------------");
@@ -448,7 +448,7 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 			PrintToChat(victim,"%sYour buildings were killed last life drink %d",msgColor, BuildingDrinks[victim]);
 			
 			
-			EmitSoundToClient(victim,"vo/burp05.wav");
+			EmitSoundToClient(victim,"vo/burp05.mp3");
 			//Display the window
 			Format(panelBuffer,sizeof(panelBuffer),"[+%d]Your buildings were killed that life",BuildingDrinks[victim]);
 			DrawPanelText(myPanel,panelBuffer);
@@ -609,7 +609,7 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 		if (asDG)
 			PrintToChat(assister,"%sYou made %s drink %d. Good job!",msgColor, vicName,drinkCount);
         if(!TEST_MODE) {
-		    EmitSoundToClient(victim,"vo/burp05.wav");
+		    EmitSoundToClient(victim,"vo/burp05.mp3");
 		
 		    Update_DG_DB(atDG ? attacker : 0, asDG ? assister : 0, victim, atDrinkCount, asDrinkCount,drinkCount, WeaponName);
         }
@@ -792,7 +792,7 @@ public Event_Round_Win(Handle:event, const String:name[], bool:dontBroadcast) {
 			new Handle:myPanel = CreatePanel();
 			new String:panelBuffer[100];
 			if(!TEST_MODE){
-			    EmitSoundToClient(i,"vo/burp05.wav");
+			    EmitSoundToClient(i,"vo/burp05.mp3");
 			}
 			//Display the window
 			Format(panelBuffer,sizeof(panelBuffer),"[+%d]You would have drank at time of fake death(s)",DeadRingerDrinks[i]);
@@ -815,7 +815,7 @@ public Event_Round_Win(Handle:event, const String:name[], bool:dontBroadcast) {
 			new Handle:myPanel = CreatePanel();
 			new String:panelBuffer[100];
 			if(!TEST_MODE){
-			    EmitSoundToClient(i,"vo/burp05.wav");
+			    EmitSoundToClient(i,"vo/burp05.mp3");
 			}
 			//Display the window
 			Format(panelBuffer,sizeof(panelBuffer),"[+%d]Your buildings were killed that life",BuildingDrinks[i]);
