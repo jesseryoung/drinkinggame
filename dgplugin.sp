@@ -108,6 +108,44 @@ public OnConfigsExecuted() {
 	
 }
 
+//is player DG for the purposes of causing drinks
+public bool:causesDrinks(playerName) {
+        if(StrContains(playerName,"[DG]",false) != -1) {
+            return true;
+        }
+        if(StrContains(playerName,"[SG]",false) != -1) {
+            return true;
+        }
+        if(StrContains(playerName,"[DCG]",false) != -1) {
+            return true;
+        }
+        if(StrContains(playerName,"[SCG]",false) != -1) {
+            return true;
+        }
+        return false;
+}
+
+//is player DG for the purposes of receiving drinks
+public bool:mayDrink(playerName) {
+        if(StrContains(playerName,"[DG]",false) != -1) {
+            return true;
+        }
+        if(StrContains(playerName,"[SG]",false) != -1) {
+            return true;
+        }
+        return false;
+} 
+
+//is player DCG for the purposes of receiving drinks
+public bool:willDrink(playerName) {
+        if(StrContains(playerName,"[DCG]",false) != -1) {
+            return true;
+        }
+        if(StrContains(playerName,"[SCG]",false) != -1) {
+            return true;
+        }
+        return false;
+} 
 
 public OnMapStart() {
     if(TEST_MODE) return;
@@ -289,45 +327,6 @@ public Action:Command_Say(client,args) {
 
 	return Plugin_Continue;
 }
-
-//is player DG for the purposes of causing drinks
-public bool:causesDrinks(playerName) {
-        if(StrContains(playerName,"[DG]",false) != -1) {
-            return true;
-        }
-        if(StrContains(playerName,"[SG]",false) != -1) {
-            return true;
-        }
-        if(StrContains(playerName,"[DCG]",false) != -1) {
-            return true;
-        }
-        if(StrContains(playerName,"[SCG]",false) != -1) {
-            return true;
-        }
-        return false;
-}
-
-//is player DG for the purposes of receiving drinks
-public bool:mayDrink(playerName) {
-        if(StrContains(playerName,"[DG]",false) != -1) {
-            return true;
-        }
-        if(StrContains(playerName,"[SG]",false) != -1) {
-            return true;
-        }
-        return false;
-} 
-
-//is player DCG for the purposes of receiving drinks
-public bool:willDrink(playerName) {
-        if(StrContains(playerName,"[DCG]",false) != -1) {
-            return true;
-        }
-        if(StrContains(playerName,"[SCG]",false) != -1) {
-            return true;
-        }
-        return false;
-} 
 
 public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) {
 	
