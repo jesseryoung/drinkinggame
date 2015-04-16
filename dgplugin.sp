@@ -38,7 +38,7 @@ enum Eweapon
 	wepName[40],
 };
 
-//Stinky Pete's half-birthday!
+//Stinky Petes half-birthday!
 new String:UpdateDate[] = "10/29/2014";
 new Handle:db = INVALID_HANDLE;
 
@@ -197,7 +197,7 @@ public Action:RandomDG(client, args) {
 
 	}
 	if (client != 0)
-		ReplyToCommand(client, "DGer's added");
+		ReplyToCommand(client, "DGers added");
 	return Plugin_Handled;
 }
 
@@ -290,6 +290,45 @@ public Action:Command_Say(client,args) {
 	return Plugin_Continue;
 }
 
+//is player DG for the purposes of causing drinks
+public bool:causesDrinks(playerName) {
+        if(StrContains(playerName,"[DG]",false) != -1) {
+            return true;
+        }
+        if(StrContains(playerName,"[SG]",false) != -1) {
+            return true;
+        }
+        if(StrContains(playerName,"[DCG]",false) != -1) {
+            return true;
+        }
+        if(StrContains(playerName,"[SCG]",false) != -1) {
+            return true;
+        }
+        return false;
+}
+
+//is player DG for the purposes of receiving drinks
+public bool:mayDrink(playerName) {
+        if(StrContains(playerName,"[DG]",false) != -1) {
+            return true;
+        }
+        if(StrContains(playerName,"[SG]",false) != -1) {
+            return true;
+        }
+        return false;
+} 
+
+//is player DCG for the purposes of receiving drinks
+public bool:willDrink(playerName) {
+        if(StrContains(playerName,"[DCG]",false) != -1) {
+            return true;
+        }
+        if(StrContains(playerName,"[SCG]",false) != -1) {
+            return true;
+        }
+        return false;
+} 
+
 public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) {
 	
 	
@@ -335,13 +374,13 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 	GetClientName(assister, assistName,sizeof(assistName))
 	
 	//See whos playin DG
-	new bool:vicDCG = (((StrContains(vicName,"[DCG]",false) != -1)) || ((StrContains(vicName,"[SCG]",false) != -1)));
-	new bool:vicDG = (((StrContains(vicName,"[DG]",false) != -1)) || ((StrContains(vicName,"[SG]",false) != -1)));
-	new bool:atDG = (((StrContains(attackName,"[DG]",false) != -1) || (StrContains(attackName,"[DCG]",false) != -1)) || ((StrContains(attackName,"[SG]",false) != -1) || (StrContains(attackName,"[SCG]",false) != -1)));
-	new bool:asDG = (((StrContains(assistName,"[DG]",false) != -1) || (StrContains(assistName,"[DCG]",false) != -1)) || ((StrContains(assistName,"[SG]",false) != -1) || (StrContains(assistName,"[SCG]",false) != -1)));
+	new bool:vicDCG = willDrink(vicName);
+	new bool:vicDG  = mayDrink (vicName);
+	new bool:atDG   = causesDrinks(attackName);
+	new bool:asDG   = causesDrinks(assistName);
 	
 
-	//Exit if vic isn't DGin
+	//Exit if vic isnt DGin
 	if (!vicDG && !vicDCG)
 		return;
 	
