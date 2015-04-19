@@ -4,7 +4,7 @@
 #include <string>
 #include <sdktools>
 #include <tf2>
-#include <sdkhooks>[dg
+#include <sdkhooks>
 #include <tf2_stocks>
 #include <adt_trie>
 
@@ -109,7 +109,7 @@ public OnConfigsExecuted() {
 }
 
 //is player DG for the purposes of causing drinks
-public bool:causesDrinks(playerName) {
+public bool:causesDrinks(String:playerName[]) {
         if(StrContains(playerName,"[DG]",false) != -1) {
             return true;
         }
@@ -126,7 +126,7 @@ public bool:causesDrinks(playerName) {
 }
 
 //is player DG for the purposes of receiving drinks
-public bool:mayDrink(playerName) {
+public bool:mayDrink(String:playerName[]) {
         if(StrContains(playerName,"[DG]",false) != -1) {
             return true;
         }
@@ -137,7 +137,7 @@ public bool:mayDrink(playerName) {
 } 
 
 //is player DCG for the purposes of receiving drinks
-public bool:willDrink(playerName) {
+public bool:willDrink(String:playerName[]) {
         if(StrContains(playerName,"[DCG]",false) != -1) {
             return true;
         }
@@ -886,7 +886,7 @@ public Event_Round_Win(Handle:event, const String:name[], bool:dontBroadcast) {
 		PrintToChatAll("%sTop 5 Drinkers:\n%s",msgColor, TopDrinkers);
 	
 	
-	for (new start = 1; start <= max_clients; start++)
+	for (new start = 1; start <= MaxClients; start++)
 		TotalDrinks[start] = 0;
 }
 
