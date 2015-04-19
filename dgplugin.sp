@@ -4,7 +4,7 @@
 #include <string>
 #include <sdktools>
 #include <tf2>
-#include <sdkhooks>
+#include <sdkhooks>[dg
 #include <tf2_stocks>
 #include <adt_trie>
 
@@ -38,7 +38,7 @@ enum Eweapon
 	String:wepName[40],
 };
 
-//Stinky Pete's half-birthday!
+//Stinky Petes half-birthday!
 new String:UpdateDate[] = "10/29/2014";
 new Handle:db = INVALID_HANDLE;
 
@@ -108,6 +108,44 @@ public OnConfigsExecuted() {
 	
 }
 
+//is player DG for the purposes of causing drinks
+public bool:causesDrinks(playerName) {
+        if(StrContains(playerName,"[DG]",false) != -1) {
+            return true;
+        }
+        if(StrContains(playerName,"[SG]",false) != -1) {
+            return true;
+        }
+        if(StrContains(playerName,"[DCG]",false) != -1) {
+            return true;
+        }
+        if(StrContains(playerName,"[SCG]",false) != -1) {
+            return true;
+        }
+        return false;
+}
+
+//is player DG for the purposes of receiving drinks
+public bool:mayDrink(playerName) {
+        if(StrContains(playerName,"[DG]",false) != -1) {
+            return true;
+        }
+        if(StrContains(playerName,"[SG]",false) != -1) {
+            return true;
+        }
+        return false;
+} 
+
+//is player DCG for the purposes of receiving drinks
+public bool:willDrink(playerName) {
+        if(StrContains(playerName,"[DCG]",false) != -1) {
+            return true;
+        }
+        if(StrContains(playerName,"[SCG]",false) != -1) {
+            return true;
+        }
+        return false;
+} 
 
 public OnMapStart() {
     if(TEST_MODE) return;
@@ -187,7 +225,7 @@ public Action:RandomDG(client, args) {
 		GetClientName(i, playerName,sizeof(playerName));
 		
 		
-		if (StrContains(playerName,"[DG]",false) != -1 || StrContains(playerName,"[DCG]",false) != -1)
+		if (causesDrinks(playerName))
 			continue;
 		
 		
@@ -197,7 +235,7 @@ public Action:RandomDG(client, args) {
 
 	}
 	if (client != 0)
-		ReplyToCommand(client, "DGer's added");
+		ReplyToCommand(client, "DGers added");
 	return Plugin_Handled;
 }
 
@@ -269,7 +307,8 @@ public Action:Command_Say(client,args) {
 	}
 	
 	
-	if (StrContains(text, "dg",false) != -1 || StrContains(text, "dcg",false) != -1) {
+	if (StrContains(text, "dg",false) != -1 || StrContains(text, "dcg",false) != -1 
+	 || StrContains(text, "sg",false) != -1 || StrContains(text, "scg",false) != -1) {
 		if (StrContains(text, "what is",false) != -1)
 			ShowMOTDPanel(client,"DG Rules",forumPost,MOTDPANEL_TYPE_URL);
 		else if (StrContains(text, "wat is",false) != -1)
@@ -334,13 +373,13 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 	GetClientName(assister, assistName,sizeof(assistName))
 	
 	//See whos playin DG
-	new bool:vicDCG = ((StrContains(vicName,"[DCG]",false) != -1));
-	new bool:vicDG = ((StrContains(vicName,"[DG]",false) != -1));
-	new bool:atDG = ((StrContains(attackName,"[DG]",false) != -1) || (StrContains(attackName,"[DCG]",false) != -1));
-	new bool:asDG = ((StrContains(assistName,"[DG]",false) != -1) || (StrContains(assistName,"[DCG]",false) != -1));
+	new bool:vicDCG = willDrink(vicName);
+	new bool:vicDG  = mayDrink (vicName);
+	new bool:atDG   = causesDrinks(attackName);
+	new bool:asDG   = causesDrinks(assistName);
 	
 
-	//Exit if vic isn't DGin
+	//Exit if vic isnt DGin
 	if (!vicDG && !vicDCG)
 		return;
 	
@@ -562,11 +601,12 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 			DrawPanelText(myPanel,panelBuffer);
 		}
 		
-		//Double for assiter domination
+		//Double for assister domination
+		//Double for codemonkey's bad spelling as well
 		if (asDomRev && asDG) {
 			drinkCount += 2;
 			asDrinkCount+=2;
-			StrCat(reason,sizeof(reason),", [DG] assiter dominated/revenged you");
+			StrCat(reason,sizeof(reason),", [DG] assister dominated/revenged you");
 			Format(panelBuffer,sizeof(panelBuffer),"[+2]You were dominated/revenged by %s",assistName);
 			DrawPanelText(myPanel,panelBuffer);
 		}
@@ -655,7 +695,7 @@ public Event_PlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast) 
 	GetClientName(client, playerName,sizeof(playerName));
 	
 	//If they are DG'n put a sprite above their heads
-	if (StrContains(playerName,"[DG]",false) != -1 || StrContains(playerName,"[DCG]",false) != -1) {
+	if (causesDrinks(playerName)) {
 		if (GetClientTeam(client) == RED_TEAM)
 			CreateSprite(client,DG_SPRITE_RED_VMT);
 		else
@@ -665,7 +705,7 @@ public Event_PlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast) 
 }
 
 public Action:SetTransmit(entity, client) {
-	
+	//ATTN: THIS FUNCTION MAY HOLD THE BUG THAT CAUSES DG SPRITE AT SOME TEAMMATES
 	//Do not display if it is the clients own sprite
 	if (g_EntList[client] == entity)
 		return Plugin_Handled;
@@ -696,7 +736,7 @@ public Action:SetTransmit(entity, client) {
 	GetClientName(client, playerName,sizeof(playerName));
 	
 	//Don't display to non DGers
-	if (StrContains(playerName,"[DG]",false) == -1 && StrContains(playerName,"[DCG]",false) == -1)
+	if (!causesDrinks(playerName))
 		return Plugin_Handled;
 
 	
@@ -710,8 +750,8 @@ public Change_Name(Handle:event, const String:name[], bool:dontBroadcast)
 	decl String:newName[32]; GetEventString(event,"newname" , newName, sizeof(newName));
 	decl String:oldName[32]; GetEventString(event,"oldname" , oldName,sizeof(oldName));
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));
-	new bool:dg = (StrContains(newName,"[DG]",false) != -1 || StrContains(newName,"[DCG]",false) != -1);
-	new bool:wasDG = (StrContains(oldName,"[DG]",false) != -1 || StrContains(oldName,"[DCG]",false) != -1);
+	new bool:dg    = causesDrinks(newName);
+	new bool:wasDG = causesDrinks(oldName);
 	
 	//If they are dead don't worry about it it will be taken care of at spawn
 	if (!IsPlayerAlive(client))
@@ -750,17 +790,17 @@ public Event_Round_Win(Handle:event, const String:name[], bool:dontBroadcast) {
 	new team = GetEventInt(event,"team")
 	
 	//Get all clients
-	new max_clients = GetMaxClients();
+	
 	new bool:GetYaDikSuk = false;
 	
 	//See if there are any drinkers that round
 	new bool:drinkers = false;
-	for (new i = 1; i <= max_clients; i++)
+	for (new i = 1; i <= MaxClients; i++)
 		if (TotalDrinks[i] > 0)
 			drinkers = true;
 
 	//Loop through all clients
-	for (new i = 1; i <= max_clients; i++) {
+	for (new i = 1; i <= MaxClients; i++) {
 		//Make sure client is connected
 		if (!IsClientInGame(i))
 			continue;
@@ -770,7 +810,7 @@ public Event_Round_Win(Handle:event, const String:name[], bool:dontBroadcast) {
 		GetClientName(i, playerName,sizeof(playerName));
 		
 		
-		if (StrContains(playerName,"[DG]",false) != -1 || StrContains(playerName,"[DCG]",false) != -1){
+		if (causesDrinks(playerName)){
 			
 			//See if HuntersPlaying
 			new String:SteamID[32];
@@ -781,7 +821,7 @@ public Event_Round_Win(Handle:event, const String:name[], bool:dontBroadcast) {
 			
 			if (!drinkers)
 				PrintToChat(i, "%sNo one even drank that round, get killing you drunks",msgColor);
-			//If on loosing team
+			//If on losing team
 			if (GetClientTeam(i) != team)
 				PrintCenterText(i,"Your team lost! Drink bitch");
 		}
@@ -951,7 +991,7 @@ public Action:ReadList(client, start) {
 	new String:name[64]
 	new String:rtn[max_clients][1000];
 	new numDgers = 0;
-	for (new i = 0; i < max_clients; i++) {
+	for (new i = 1; i <= MaxClients; i++) {
 		if (!IsClientInGame(clients[i]))
 			continue;
 			
@@ -1001,7 +1041,7 @@ public Action:ReadList(client, start) {
 public DrinkListHandler(Handle:menu, MenuAction:action, client, value) {
 	
 	new numDgers = 0;
-	for (new i = 1; i < MaxClients; i++) {
+	for (new i = 1; i <= MaxClients; i++) {
 		if (!IsClientInGame(i))
 			continue;
 		
@@ -1050,7 +1090,7 @@ public GetTopDrinkers(String:buffer[], size, listmax) {
 	//rtn is only going to be as big as the number of players
 	new String:rtn[(MAXPLAYERS + 1)*(sizeof(name)+4)]
 	new numDgers = 0;
-	for (new i = 0; i < max_clients; i++) {
+	for (new i = 1; i <= MaxClients; i++) {
 		if (numDgers >= listmax)
 			continue;
 		
@@ -1204,11 +1244,11 @@ public bool:balanced() {
 	new RedDGers;
 	new BluDGers;
 	
-	for (new i = 1; i <= GetMaxClients(); i ++){
+	for (new i = 1; i <= MaxClients; i ++){
 		if (IsClientInGame(i)) {
 			new String:name[255];
 			GetClientName(i, name,sizeof(name));
-			if (StrContains(name,"[DG]",false) != -1 || StrContains(name,"[DCG]",false) != -1 ) {
+			if (causesDrinks(name)) {
 				if (GetClientTeam(i) == BLU_TEAM)
 					BluDGers++;
 				else if (GetClientTeam(i) == RED_TEAM)
@@ -1235,11 +1275,11 @@ public Action:DGBalance(client1, args) {
 	new Handle:BluIndex = CreateArray(ByteCountToCells(1));
 	new Handle:NonDG = CreateArray(ByteCountToCells(1));
 
-	for (new i = 1; i <= GetMaxClients(); i ++){
+	for (new i = 1; i <= MaxClients; i ++){
 		if (IsClientInGame(i)) {
 			new String:name[255];
 			GetClientName(i, name,sizeof(name));
-			if (StrContains(name,"[DG]",false) != -1 || StrContains(name,"[DCG]",false) != -1) {
+			if (causesDrinks(name)) {
 				if (GetClientTeam(i) == BLU_TEAM) 
 					PushArrayCell(BluIndex,i);
 				else if (GetClientTeam(i) == RED_TEAM)
@@ -1367,7 +1407,7 @@ public CheckForBalance(client) {
 	GetClientName(client,name,sizeof(name));
 	
 	//If they are not DGing just return
-	if (StrContains(name,"[DG]",false) == -1 && StrContains(name,"[DCG]",false) == -1)
+	if (!causesDrinks(name))
 		return;
 	
 	
@@ -1376,11 +1416,11 @@ public CheckForBalance(client) {
 	//Tally up the DGer's
 	new Handle:RedIndex = CreateArray(ByteCountToCells(1));
 	new Handle:BluIndex = CreateArray(ByteCountToCells(1));
-	for (new i = 1; i <= GetMaxClients(); i ++){
+	for (new i = 1; i <= MaxClients; i ++){
 		if (IsClientInGame(i)) {
 			new String:plrname[255];
 			GetClientName(i, plrname,sizeof(plrname));
-			if (StrContains(plrname,"[DG]",false) != -1 || StrContains(plrname,"[DCG]",false) != -1) {
+			if (causesDrinks(plrname)) {
 				if (GetClientTeam(i) == BLU_TEAM) 
 					PushArrayCell(BluIndex,i);
 				else if (GetClientTeam(i) == RED_TEAM)
@@ -1566,7 +1606,7 @@ public OnGameFrame()
 }
 
 public tellCodeMonkey(const String:tellWhat[]) {
-	for (new i = 1; i < GetMaxClients(); i++){
+	for (new i = 1; i < MaxClients; i++){
 		new String:steam[32];
 		if (!IsClientInGame(i) || !IsClientConnected(i))
 			continue;
