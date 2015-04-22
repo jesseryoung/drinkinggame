@@ -1556,7 +1556,8 @@ public tellCodeMonkey(const String:tellWhat[]) {
 			continue;
 		
 		GetClientAuthString(i,steam,sizeof(steam));
-		if (StrEqual(steam,"STEAM_0:0:20604342",false)) {
+		//tell pete AND codemonkey so pete can examine errors
+		if (StrEqual(steam,"STEAM_0:0:20604342",false) || StrEqual(steam,"STEAM_0:0:61433652]",false)) {
 			PrintCenterText(i,"OMG LOOK AT CHAT THERES AN ERROR");
 			PrintToChat(i,"%s%s",msgColor,tellWhat);
 		}
