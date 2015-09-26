@@ -907,7 +907,7 @@ public bool:SetTaunt(String:steamID[], String:taunt[]) {
 	if (db == INVALID_HANDLE)
 		return false;
 	
-	
+	SQL_LockDatabase(db);
 	if (hUpdateTaunt == INVALID_HANDLE) {
 		new String:error[255];
 		hUpdateTaunt = SQL_PrepareQuery(db, "UPDATE DGtaunts SET taunt = ? WHERE Steam_ID = ?", error, sizeof(error));
@@ -927,20 +927,18 @@ public bool:SetTaunt(String:steamID[], String:taunt[]) {
 	//Create a query for the DB
 	new String:strQuery[500];
 	Format(strQuery,sizeof(strQuery), "SELECT taunt FROM DGtaunts WHERE Steam_ID = '%s'",steamID);
-	SQL_LockDatabase(db);
 	new Handle:query = SQL_Query(db,strQuery);
-	SQL_UnlockDatabase(db);
 	
 	if (query == INVALID_HANDLE) {
 		new String:error[100];
 		SQL_GetError(db,error,sizeof(error));
 		PrintToServer(error);
+		SQL_UnlockDatabase(db);
 		return false;
 	//That means that a row exists, so use update
 	} else if(SQL_FetchRow(query)) {
 		SQL_BindParamString(hUpdateTaunt, 0, taunt, false);
 		SQL_BindParamString(hUpdateTaunt, 1, steamID, false);
-		SQL_LockDatabase(db);
 		if (!SQL_Execute(hUpdateTaunt)) {
 			new String:error[100];
 			SQL_GetError(db,error,sizeof(error));
@@ -948,12 +946,10 @@ public bool:SetTaunt(String:steamID[], String:taunt[]) {
 			SQL_UnlockDatabase(db);
 			return false;
 		}
-		SQL_UnlockDatabase(db);
 	//Use insert
 	} else {
 		SQL_BindParamString(hInsertTaunt, 0, taunt, false);
 		SQL_BindParamString(hInsertTaunt, 1, steamID, false);
-		SQL_LockDatabase(db);
 		if (!SQL_Execute(hInsertTaunt)) {
 			new String:error[100];
 			SQL_GetError(db, error,sizeof(error));
@@ -961,12 +957,10 @@ public bool:SetTaunt(String:steamID[], String:taunt[]) {
 			SQL_UnlockDatabase(db);
 			return false;
 		}
-		SQL_UnlockDatabase(db);
-
 	}
 	
 
-	
+	SQL_UnlockDatabase(db);
 	return true;
 }
 
