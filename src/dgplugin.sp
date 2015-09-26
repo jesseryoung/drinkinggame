@@ -16,15 +16,15 @@
 
 
 //in tf2_stocks
-#define TF2_PLAYERCOND_DISGUISING			(1<<2)
-#define TF2_PLAYERCOND_DISGUISED    	    (1<<3)
-#define TF2_PLAYERCOND_SPYCLOAK				(1<<4)
+#define TF2_PLAYERCOND_DISGUISING           (1<<2)
+#define TF2_PLAYERCOND_DISGUISED            (1<<3)
+#define TF2_PLAYERCOND_SPYCLOAK             (1<<4)
 
 
-#define DG_SPRITE_RED_VTF 	"materials/dg/DG_red.vtf"
-#define DG_SPRITE_RED_VMT 	"materials/dg/DG_red.vmt"
-#define DG_SPRITE_BLU_VTF 	"materials/dg/DG_blu.vtf"
-#define DG_SPRITE_BLU_VMT 	"materials/dg/DG_blu.vmt"
+#define DG_SPRITE_RED_VTF   "materials/dg/DG_red.vtf"
+#define DG_SPRITE_RED_VMT   "materials/dg/DG_red.vmt"
+#define DG_SPRITE_BLU_VTF   "materials/dg/DG_blu.vtf"
+#define DG_SPRITE_BLU_VMT   "materials/dg/DG_blu.vmt"
 new DrinkListStart[MAXPLAYERS + 1];
 new TotalDrinks[MAXPLAYERS + 1];
 new BuildingDrinks[MAXPLAYERS + 1];
@@ -73,6 +73,7 @@ public OnPluginStart()
 	RegConsoleCmd("dg_update",Update);
 	RegConsoleCmd("dg_reloadmelee",LoadWepMults);
 	RegConsoleCmd("dg_random", RandomDG);
+	RegAdminCmd("dg_add_bots", DGAddBots, ADMFLAG_GENERIC);
 	RegAdminCmd("dg_balance", DGBalance, ADMFLAG_GENERIC);
 
 
@@ -1261,6 +1262,17 @@ public bool:balanced() {
 
 
 }
+
+public Action:DGAddBots(client, args) {
+	new count = 20;
+	while (count > 0) {
+		decl String:command[50];
+		Format(command, sizeof(command), "tf_bot_add \"[DG] Drinker %i\"", count);
+		ServerCommand(command);
+		count--;
+	}
+}
+
 public Action:DGBalance(client1, args) {
 
 
