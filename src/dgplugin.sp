@@ -52,8 +52,10 @@ new gVelocityOffset;
 new Handle:g_hStatsURL;
 new Handle:g_hRulesURL;
 new Handle:dgBottleDeath;
+new Handle:dgUnfairBalance;
 new Handle:dgDebug;
 
+#include "helpers.sp"
 #include "effects.sp"
 
 public Plugin:myinfo =
@@ -84,6 +86,7 @@ public OnPluginStart()
 	g_hStatsURL = CreateConVar("dg_statsurl", "http://stats.team-brh.com/dg", "Web location where DGers can view their stats");
 	g_hRulesURL = CreateConVar("dg_rulesurl", "http://www.team-brh.com/forums/viewtopic.php?f=8&t=7666", "Web location where rules are posted for when a player types dg_info in chat");
 	dgBottleDeath = CreateConVar("dg_bottledeath", "1", "Spawn bottles based on how many drinks were given on death");
+	dgUnfairBalance = CreateConVar("dg_unfairBalance", "1", "Prevent certain heavy medic pairs from being dg-balanced separated");
 	dgDebug = CreateConVar("dg_debug", "0", "Drinking Game Debug Mode");
 	//For findtarget
 	LoadTranslations("common.phrases");
@@ -273,7 +276,7 @@ public Action:Command_Say(client,args) {
 	}
 
 	new String:steamID[32];
-	GetClientAuthId(client,AuthId_Steam3,steamID,sizeof(steamID))
+	GetClientAuthId(client,AuthId_Steam2,steamID,sizeof(steamID))
 
 	if (StrEqual(cmd,"dg_drinklist",false)) {
 		ReadList(client,0);
@@ -506,7 +509,7 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 
 	//Now the taunt for that player
 	new String: steamID[32];
-	GetClientAuthId(attacker,AuthId_Steam3,steamID,sizeof(steamID));
+	GetClientAuthId(attacker,AuthId_Steam2,steamID,sizeof(steamID));
 	new String:attaunt[100];
 	GetTaunt(steamID,attaunt,sizeof(attaunt),false);
 
@@ -815,7 +818,7 @@ public Event_Round_Win(Handle:event, const String:name[], bool:dontBroadcast) {
 
 			//See if HuntersPlaying
 			new String:SteamID[32];
-			GetClientAuthId(i,AuthId_Steam3,SteamID,sizeof(SteamID));
+			GetClientAuthId(i,AuthId_Steam2,SteamID,sizeof(SteamID));
 			//lolwut
 			if (StrEqual(SteamID,"STEAM_0:1:6219443",false))
 				GetYaDikSuk = true;
@@ -1172,15 +1175,15 @@ public Update_DG_DB(attacker, assister, victim, at_drinks, as_drinks, vic_drinks
 	*/
 
 	if (attacker != 0) {
-		GetClientAuthId(attacker,AuthId_Steam3,atSteam,sizeof(atSteam));
+		GetClientAuthId(attacker,AuthId_Steam2,atSteam,sizeof(atSteam));
 		Format(atSteam, sizeof(atSteam),"'%s'",atSteam);
 	}
 	if (assister != 0) {
-		GetClientAuthId(assister,AuthId_Steam3,asSteam,sizeof(asSteam));
+		GetClientAuthId(assister,AuthId_Steam2,asSteam,sizeof(asSteam));
 		Format(asSteam, sizeof(asSteam),"'%s'",asSteam);
 	}
 
-	GetClientAuthId(victim,AuthId_Steam3,vicSteam,sizeof(vicSteam));
+	GetClientAuthId(victim,AuthId_Steam2,vicSteam,sizeof(vicSteam));
 	Format(vicSteam, sizeof(vicSteam),"'%s'",vicSteam);
 
 	new String:query[1000];
@@ -1213,7 +1216,7 @@ public DGStats(client, String:plrname[]) {
 	GetConVarString(g_hStatsURL,statsUrl,sizeof(statsUrl));
 
 	new String:steam[32];
-	GetClientAuthId(client,AuthId_Steam3,steam,sizeof(steam));
+	GetClientAuthId(client,AuthId_Steam2,steam,sizeof(steam));
 	if (strlen(plrname) > 0) {
 		new String: url[255];
 		Format(url,sizeof(url),"%s/dgstats.php?name=%s",statsUrl, plrname);
@@ -1255,7 +1258,12 @@ public Action:DGAddBots(client, args) {
 	new count = 20;
 	while (count > 0) {
 		decl String:command[50];
-		Format(command, sizeof(command), "tf_bot_add \"[DG] Drinker %i\"", count);
+		if (GetRandomFloat() < 0.8) {
+			Format(command, sizeof(command), "tf_bot_add \"[DG] Drinker %i\"", count);
+		}
+		else {
+			Format(command, sizeof(command), "tf_bot_add \"Non Drinker %i\"", count);
+		}
 		ServerCommand(command);
 		count--;
 	}
@@ -1291,178 +1299,87 @@ public Action:DGBalance(client1, args) {
 		return Plugin_Handled;
 	}
 
-	//If red has more dgers
+
+	new Handle:larger;
+	new largerTeam;
+	new smallerTeam;
+	//Find the larger team to move players from
 	if (GetArraySize(RedIndex) > GetArraySize(BluIndex)) {
-		while (GetArraySize(NonDG) > 0 && !balanced()) {
+		larger = RedIndex;
+		largerTeam = RED_TEAM;
+		smallerTeam = BLU_TEAM;
+	}
+	else if (GetArraySize(RedIndex) < GetArraySize(BluIndex)) {
+		larger = BluIndex;
+		largerTeam = BLU_TEAM;
+		smallerTeam = RED_TEAM;
+	}
+
+	//Perform the balance
+	while (GetArraySize(NonDG) > 0 && !balanced()) {
 		//Get a random non dger
-			new clientindex = 0;
-			if (GetArraySize(NonDG) > 0) {
-				clientindex = GetRandomInt(0, GetArraySize(NonDG) - 1);
-			}
-			//Get a random DGer from Red
-			new dgerindex = GetRandomInt(0, GetArraySize(RedIndex) - 1);
+		new clientindex = 0;
+		if (GetArraySize(NonDG) > 0) {
+			clientindex = GetRandomInt(0, GetArraySize(NonDG) - 1);
+		}
+		//Get a random DGer from the larger team
+		new dgerindex = GetRandomInt(0, GetArraySize(larger) - 1);
 
+		new client = GetArrayCell(NonDG, clientindex);
+		new dger = GetArrayCell(larger, dgerindex);
 
-			new client = GetArrayCell(NonDG, clientindex);
-			new dger = GetArrayCell(RedIndex, dgerindex);
-
-			if (!IsClientConnected(client) || !IsClientInGame(client)){
-				RemoveFromArray(NonDG, clientindex);
-				continue;
-			}
-
-			//if they are DGin or on red team skip them
-			if (FindValueInArray(RedIndex,client) != -1 || FindValueInArray(BluIndex,client) != -1 || GetClientTeam(client) == RED_TEAM){
-				RemoveFromArray(NonDG, clientindex);
-				continue;
-			}
-
-
-			new String:name[255];
-
-			GetClientName(dger,name,sizeof(name));
-			ChangeClientTeam(dger,BLU_TEAM);
-			TF2_RespawnPlayer(dger);
-			PrintToChatAll("%sMoved DGer %s to Blu team for DG balance",msgColor,name);
-
-			GetClientName(client, name, sizeof(name));
-			ChangeClientTeam(client, RED_TEAM);
-			PrintToChatAll("%sMoved %s to Red team for DG balance",msgColor,name);
-			TF2_RespawnPlayer(client);
-
-			RemoveFromArray(RedIndex, dgerindex);
-
+		if (!IsClientConnected(client) || !IsClientInGame(client)){
 			RemoveFromArray(NonDG, clientindex);
+			continue;
 		}
 
-	}
-
-	//If blu has more DGers
-	if (GetArraySize(RedIndex) < GetArraySize(BluIndex)) {
-		while (GetArraySize(NonDG) > 0 && !balanced()) {
-			//Get a random non dger
-			new clientindex = 0;
-			if (GetArraySize(NonDG) > 0) {
-				clientindex = GetRandomInt(0, GetArraySize(NonDG) - 1);
-			}
-			//Get a random DGer from Red
-			new dgerindex = GetRandomInt(0, GetArraySize(BluIndex) - 1);
-
-
-			new client = GetArrayCell(NonDG, clientindex);
-			new dger = GetArrayCell(BluIndex, dgerindex);
-
-			if (!IsClientConnected(client) || !IsClientInGame(client)){
-				RemoveFromArray(NonDG, clientindex);
-				continue;
-			}
-
-			//if they are DGin or on blue team skip them
-			if (FindValueInArray(RedIndex,client) != -1 || FindValueInArray(BluIndex,client) != -1 || GetClientTeam(client) == BLU_TEAM){
-				RemoveFromArray(NonDG, clientindex);
-				continue;
-			}
-
-			new String:name[255];
-			GetClientName(dger, name,sizeof(name));
-			ChangeClientTeam(dger,RED_TEAM);
-			TF2_RespawnPlayer(dger);
-			PrintToChatAll("%sMoved DGer %s to RED team for DG balance",msgColor,name);
-
-			GetClientName(client, name, sizeof(name));
-			ChangeClientTeam(client, BLU_TEAM);
-			PrintToChatAll("%sMoved %s to Blu team for DG balance",msgColor,name);
-			TF2_RespawnPlayer(client);
-
-			RemoveFromArray(BluIndex, dgerindex);
+		//if they are DGin or on the larger team skip them
+		if (FindValueInArray(RedIndex,client) != -1 || FindValueInArray(BluIndex,client) != -1 || GetClientTeam(client) == largerTeam){
 			RemoveFromArray(NonDG, clientindex);
+			continue;
 		}
+
+		//Unfair balance
+		if (GetConVarBool(dgUnfairBalance)) {
+			new String:steam[32];
+			GetClientAuthId(dger,AuthId_Steam2,steam,sizeof(steam));
+			if (StrContains(steam,"STEAM_0:0:22399196",false) != -1 || StrContains(steam,"STEAM_0:0:20604342",false) != -1) {
+				new bool:both = false;
+				for (new i = 0; i < GetArraySize(larger); i++) {
+					new teamClient = GetArrayCell(larger, i);
+					if (teamClient == dger) continue;
+					new String:steam2[32];
+					GetClientAuthId(teamClient,AuthId_Steam2,steam2,sizeof(steam));
+					if (StrContains(steam2,"STEAM_0:0:22399196",false) != -1 || StrContains(steam2,"STEAM_0:0:20604342",false) != -1) {
+						both = true;
+					}
+				}
+				//If both steam ids found, continue (don't balance with this dger)
+				if (both) continue;
+			}
+		}
+
+		new String:name[255];
+		new String:teamName[4];
+		GetClientName(dger,name,sizeof(name));
+		ChangeClientTeam(dger,smallerTeam);
+		TF2_RespawnPlayer(dger);
+		getTeamName(smallerTeam, teamName, sizeof(teamName));
+		PrintToChatAll("%sMoved DGer %s to %s team for DG balance",msgColor,name, teamName);
+
+		GetClientName(client, name, sizeof(name));
+		ChangeClientTeam(client, largerTeam);
+		getTeamName(largerTeam, teamName, sizeof(teamName));
+		PrintToChatAll("%sMoved %s to %s team for DG balance",msgColor,name, teamName);
+		TF2_RespawnPlayer(client);
+
+		RemoveFromArray(larger, dgerindex);
+		RemoveFromArray(NonDG, clientindex);
 	}
+
 	return Plugin_Handled;
 }
 
-public CheckForBalance(client) {
-	if (!GetConVarBool(dgDebug)) {
-		return;
-	}
-	//If the teams are already balanced or they have been balanced recently just return
-	if (balanced()) {
-		return;
-	}
-	new String:name[255];
-	GetClientName(client,name,sizeof(name));
-
-	//If they are not DGing just return
-	if (!causesDrinks(name))
-		return;
-
-
-	new plrTeam = GetClientTeam(client);
-
-//Tally up the DGer's
-	new Handle:RedIndex = CreateArray(ByteCountToCells(1));
-	new Handle:BluIndex = CreateArray(ByteCountToCells(1));
-	for (new i = 1; i <= MaxClients; i ++){
-		if (IsClientInGame(i)) {
-			new String:plrname[255];
-			GetClientName(i, plrname,sizeof(plrname));
-			if (causesDrinks(plrname)) {
-				if (GetClientTeam(i) == BLU_TEAM) {
-					PushArrayCell(BluIndex,i);
-				}
-				else if (GetClientTeam(i) == RED_TEAM) {
-					PushArrayCell(RedIndex,i);
-				}
-			}
-		}
-	}
-
-
-	//If this player is on the RED team and blue has more DGer's
-	if (plrTeam == RED_TEAM && GetArraySize(RedIndex) < GetArraySize(BluIndex)) {
-		new randDGer = GetRandomInt(0, GetArraySize(BluIndex)-1);
-
-		//Do not move non-dgers
-		/*
-		//Change the client to the team with more DGers
-		ChangeClientTeam(client,BLU_TEAM);
-		//TF2_RespawnPlayer(client);
-
-		//Notify the game that they did that and tell the player that, that happend
-		PrintToChatAll("%sMoved %s to BLU team for DG balance",msgColor,name);
-		PrintCenterText(client,"You were switched to BLU team for drinking game balance");
-		*/
-
-		//Get the first DGer's name
-		GetClientName(GetArrayCell(BluIndex,randDGer),name,sizeof(name));
-		//Change his team
-		ChangeClientTeam(GetArrayCell(BluIndex,randDGer),RED_TEAM);
-		//Make him respawn instantly
-		TF2_RespawnPlayer(GetArrayCell(BluIndex,randDGer));
-		PrintToChatAll("%sMoved DGer %s to RED team for DG balance",msgColor,name);
-		PrintCenterText(GetArrayCell(BluIndex,randDGer),"You were switched to RED team for drinking game balance");
-	}
-	else if(plrTeam == BLU_TEAM && GetArraySize(RedIndex) > GetArraySize(BluIndex)) {
-	new randDGer = GetRandomInt(0, GetArraySize(RedIndex)-1);
-
-	//Don't move non-dGER
-	/*
-	ChangeClientTeam(client,RED_TEAM);
-	//TF2_RespawnPlayer(client);
-	PrintToChatAll("%sMoved %s to RED team for DG balance",msgColor,name);
-	PrintCenterText(client,"You were switched to RED team for drinking game balance");
-	*/
-
-
-	GetClientName(GetArrayCell(RedIndex,randDGer),name,sizeof(name));
-	ChangeClientTeam(GetArrayCell(RedIndex,randDGer),BLU_TEAM);
-	TF2_RespawnPlayer(GetArrayCell(RedIndex,randDGer));
-	PrintToChatAll("%sMoved DGer %s to BLU team for DG balance",msgColor,name);
-	PrintCenterText(GetArrayCell(RedIndex,randDGer),"You were switched to BLU team for drinking game balance");
-	} else {
-		return;
-	}
-}
 
 public OnGameFrame()
 {
@@ -1495,7 +1412,7 @@ public tellCodeMonkey(const String:tellWhat[]) {
 			continue;
 		}
 
-		GetClientAuthId(i,AuthId_Steam3,steam,sizeof(steam));
+		GetClientAuthId(i,AuthId_Steam2,steam,sizeof(steam));
 		//tell pete AND codemonkey so pete can examine errors when code not there
 		if (StrEqual(steam,"STEAM_0:0:20604342",false) || StrEqual(steam,"STEAM_0:0:61433652]",false)) {
 			PrintCenterText(i,"OMG LOOK AT CHAT THERES AN ERROR");
