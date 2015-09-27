@@ -52,6 +52,7 @@ new gVelocityOffset;
 new Handle:g_hStatsURL;
 new Handle:g_hRulesURL;
 new Handle:dgBottleDeath;
+new Handle:dgDebug;
 
 #include "effects.sp"
 
@@ -83,6 +84,7 @@ public OnPluginStart()
 	g_hStatsURL = CreateConVar("dg_statsurl", "http://stats.team-brh.com/dg", "Web location where DGers can view their stats");
 	g_hRulesURL = CreateConVar("dg_rulesurl", "http://www.team-brh.com/forums/viewtopic.php?f=8&t=7666", "Web location where rules are posted for when a player types dg_info in chat");
 	dgBottleDeath = CreateConVar("dg_bottledeath", "1", "Spawn bottles based on how many drinks were given on death");
+	dgDebug = CreateConVar("dg_debug", "0", "Drinking Game Debug Mode");
 	//For findtarget
 	LoadTranslations("common.phrases");
 
@@ -101,9 +103,10 @@ public OnPluginEnd() {
 }
 
 public OnConfigsExecuted() {
-	if(TEST_MODE) return;
+	if (GetConVarBool(dgDebug)) {
+		return;
+	}
 	PrecacheSound("vo/burp05.mp3");
-
 }
 
 //is player DG for the purposes of causing drinks
@@ -146,7 +149,9 @@ public bool:willDrink(String:playerName[]) {
 }
 
 public OnMapStart() {
-	if(TEST_MODE) return;
+	if (GetConVarBool(dgDebug)) {
+		return;
+	}
 	PrecacheGeneric(DG_SPRITE_RED_VMT, true);
 	AddFileToDownloadsTable(DG_SPRITE_RED_VMT);
 	PrecacheGeneric(DG_SPRITE_RED_VTF, true);
@@ -159,20 +164,26 @@ public OnMapStart() {
 }
 
 public LoadSQL() {
-	if(TEST_MODE) return;
+	if (GetConVarBool(dgDebug)) {
+		return;
+	}
 	new String:error[255]
 	db = SQL_Connect("DGGame", true, error, sizeof(error))
 
 
-	if (db == INVALID_HANDLE)
-	{
+	if (db == INVALID_HANDLE) {
 		PrintToServer("Could not connect: %s", error);
 		return;
+	}
+	else {
+		PrintToServer("DG: Connected to SQL server");
 	}
 }
 
 public Action:LoadWepMults(client,args) {
-	if(TEST_MODE) return Plugin_Handled;
+	if (GetConVarBool(dgDebug)) {
+		return Plugin_Handled;
+	}
 	if (Weapons != INVALID_HANDLE)
 		CloseHandle(Weapons);
 
@@ -191,12 +202,10 @@ public Action:LoadWepMults(client,args) {
 		SetTrieValue(Weapons,weaponinfo[wepName],weaponinfo[0]);
 	}
 
-
 	if (client != 0)
 		ReplyToCommand(client,"Melee weapons reloaded successfully");
 
 	return Plugin_Handled;
-
 }
 
 public Action:RandomDG(client, args) {
@@ -264,7 +273,7 @@ public Action:Command_Say(client,args) {
 	}
 
 	new String:steamID[32];
-	GetClientAuthString(client,steamID,sizeof(steamID))
+	GetClientAuthId(client,AuthId_Steam3,steamID,sizeof(steamID))
 
 	if (StrEqual(cmd,"dg_drinklist",false)) {
 		ReadList(client,0);
@@ -497,7 +506,7 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 
 	//Now the taunt for that player
 	new String: steamID[32];
-	GetClientAuthString(attacker,steamID,sizeof(steamID));
+	GetClientAuthId(attacker,AuthId_Steam3,steamID,sizeof(steamID));
 	new String:attaunt[100];
 	GetTaunt(steamID,attaunt,sizeof(attaunt),false);
 
@@ -638,9 +647,8 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 		if (asDG) {
 			PrintToChat(assister,"%sYou made %s drink %d. Good job!",msgColor, vicName,drinkCount);
 		}
-		if(!TEST_MODE) {
+		if (GetConVarBool(dgDebug)) {
 			EmitSoundToClient(victim,"vo/burp05.mp3");
-
 			Update_DG_DB(atDG ? attacker : 0, asDG ? assister : 0, victim, atDrinkCount, asDrinkCount,drinkCount, WeaponName);
 		}
 		TotalDrinks[victim] += drinkCount;
@@ -665,7 +673,9 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 }
 
 public getDrinkCount(String:name[]) {
-	if(TEST_MODE) return 3;
+	if (GetConVarBool(dgDebug)) {
+		return 3;
+	}
 	//Make sure not to read a bad map
 	if (Weapons != INVALID_HANDLE) {
 		new wepBonus = 0;
@@ -677,7 +687,9 @@ public getDrinkCount(String:name[]) {
 
 
 public Event_PlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast) {
-	if(TEST_MODE) return;
+	if (GetConVarBool(dgDebug)) {
+		return;
+	}
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));
 	new String:playerName[32];
 	GetClientName(client, playerName,sizeof(playerName));
@@ -754,9 +766,8 @@ public Change_Name(Handle:event, const String:name[], bool:dontBroadcast)
 	if (dg && wasDG) {
 		return;
 	}
-
 	//If they have started DGin
-	if (dg && !TEST_MODE) {
+	if (dg && !GetConVarBool(dgDebug)) {
 		if (GetClientTeam(client) == RED_TEAM)
 			CreateSprite(client,DG_SPRITE_RED_VMT);
 		else if (GetClientTeam(client) == BLU_TEAM)
@@ -804,7 +815,7 @@ public Event_Round_Win(Handle:event, const String:name[], bool:dontBroadcast) {
 
 			//See if HuntersPlaying
 			new String:SteamID[32];
-			GetClientAuthString(i,SteamID,sizeof(SteamID));
+			GetClientAuthId(i,AuthId_Steam3,SteamID,sizeof(SteamID));
 			//lolwut
 			if (StrEqual(SteamID,"STEAM_0:1:6219443",false))
 				GetYaDikSuk = true;
@@ -823,7 +834,7 @@ public Event_Round_Win(Handle:event, const String:name[], bool:dontBroadcast) {
 
 			new Handle:myPanel = CreatePanel();
 			new String:panelBuffer[100];
-			if(!TEST_MODE){
+			if(!GetConVarBool(dgDebug)){
 				EmitSoundToClient(i,"vo/burp05.mp3");
 			}
 			//Display the window
@@ -846,7 +857,7 @@ public Event_Round_Win(Handle:event, const String:name[], bool:dontBroadcast) {
 
 			new Handle:myPanel = CreatePanel();
 			new String:panelBuffer[100];
-			if(!TEST_MODE){
+			if(!GetConVarBool(dgDebug)){
 				EmitSoundToClient(i,"vo/burp05.mp3");
 			}
 			//Display the window
@@ -889,11 +900,13 @@ new Handle:hUpdateTaunt = INVALID_HANDLE;
 new Handle:hInsertTaunt = INVALID_HANDLE;
 
 public bool:SetTaunt(String:steamID[], String:taunt[]) {
-	if(TEST_MODE) return false;
-//Change it to uppercase
+	if(GetConVarBool(dgDebug)) {
+		return false;
+	}
+	//Change it to uppercase
 	StringToUpper(taunt);
 
-//Return if the db is closed
+	//Return if the db is closed
 	if (db == INVALID_HANDLE) {
 		return false;
 	}
@@ -901,14 +914,14 @@ public bool:SetTaunt(String:steamID[], String:taunt[]) {
 	SQL_LockDatabase(db);
 	if (hUpdateTaunt == INVALID_HANDLE) {
 		new String:error[255];
-		hUpdateTaunt = SQL_PrepareQuery(db, "UPDATE DGtaunts SET taunt = ? WHERE Steam_ID = ?", error, sizeof(error));
+		hUpdateTaunt = SQL_PrepareQuery(db, "UPDATE dgtaunts SET taunt = ? WHERE Steam_ID = ?", error, sizeof(error));
 		if (hUpdateTaunt == INVALID_HANDLE){
 			tellCodeMonkey(error);
 		}
 	}
 	if (hInsertTaunt == INVALID_HANDLE) {
 		new String:error[255];
-		hInsertTaunt = SQL_PrepareQuery(db, "INSERT INTO DGtaunts (taunt, Steam_ID) VALUES(?, ?)", error, sizeof(error));
+		hInsertTaunt = SQL_PrepareQuery(db, "INSERT INTO dgtaunts (taunt, Steam_ID) VALUES(?, ?)", error, sizeof(error));
 		if (hInsertTaunt == INVALID_HANDLE){
 			tellCodeMonkey(error);
 		}
@@ -916,7 +929,7 @@ public bool:SetTaunt(String:steamID[], String:taunt[]) {
 
 	//Create a query for the DB
 	new String:strQuery[500];
-	Format(strQuery,sizeof(strQuery), "SELECT taunt FROM DGtaunts WHERE Steam_ID = '%s'",steamID);
+	Format(strQuery,sizeof(strQuery), "SELECT taunt FROM dgtaunts WHERE Steam_ID = '%s'",steamID);
 	new Handle:query = SQL_Query(db,strQuery);
 
 	if (query == INVALID_HANDLE) {
@@ -1031,20 +1044,14 @@ public DrinkListHandler(Handle:menu, MenuAction:action, client, value) {
 	if (action == MenuAction_Select) {
 		new next = 0;
 		new prev = 0;
-		new close = 0;
 		//Next and prev is on there
 		if (DrinkListStart[client] > 0 && DrinkListStart[client] + 5 < numDgers) {
 			prev = 2;
 			next = 1;
-			close = 3;
 		} else if (DrinkListStart[client] == 0 && DrinkListStart[client] + 5 < numDgers) {
 			next = 1;
-			close = 2;
 		} else if (DrinkListStart[client] > 0) {
 			prev = 1;
-			close = 2;
-		} else {
-			close = 1;
 		}
 
 		if (value == prev) {
@@ -1110,34 +1117,37 @@ public sortDrinks(elem1, elem2, const array[],Handle:hndl) {
 }
 
 public GetTaunt(String:steamID[32], String:buf[], bufLen, bool:returnError) {
-	if(TEST_MODE) strcopy(buf,bufLen,"LOOOOL TEST MODE");
+	if (StrContains(steamID, "BOT")) {
+		return;
+	}
 	new String:rtn[100] = "";
 
 	//Return if the db is closed
-	if (db == INVALID_HANDLE)
+	if (db == INVALID_HANDLE) {
 		return;
+	}
 
 	//Create a query for the DB
 	new String:strQuery[250];
-	Format(strQuery,sizeof(strQuery), "SELECT taunt FROM DGtaunts WHERE Steam_ID = '%s'",steamID);
+	Format(strQuery,sizeof(strQuery), "SELECT taunt FROM dgtaunts WHERE Steam_ID = '%s'",steamID);
 	SQL_LockDatabase(db);
 	new Handle:query = SQL_Query(db,strQuery);
 	SQL_UnlockDatabase(db);
 
-	if (query == INVALID_HANDLE && returnError) {
+	if (query == INVALID_HANDLE) {
 		SQL_GetError(db,rtn,sizeof(rtn));
-		db = INVALID_HANDLE
+		PrintToServer(rtn);
 	} else if(SQL_FetchRow(query)) {
 		SQL_FetchString(query,0,rtn,sizeof(rtn));
-	} else if(returnError)
-	strcopy(rtn,sizeof(rtn),"No taunt found, use dg_settaunt");
-	strcopy(buf,bufLen,rtn);
+	} else if(returnError) {
+		strcopy(buf,bufLen,rtn);
+	}
 }
 
 
 public Update_DG_DB(attacker, assister, victim, at_drinks, as_drinks, vic_drinks, String: weapon[]) {
-//Return if the db is closed
-	if (db == INVALID_HANDLE || TEST_MODE) {
+	//Return if the db is closed
+	if (db == INVALID_HANDLE || GetConVarBool(dgDebug)) {
 		return;
 	}
 
@@ -1162,15 +1172,15 @@ public Update_DG_DB(attacker, assister, victim, at_drinks, as_drinks, vic_drinks
 	*/
 
 	if (attacker != 0) {
-		GetClientAuthString(attacker,atSteam,sizeof(atSteam));
+		GetClientAuthId(attacker,AuthId_Steam3,atSteam,sizeof(atSteam));
 		Format(atSteam, sizeof(atSteam),"'%s'",atSteam);
 	}
 	if (assister != 0) {
-		GetClientAuthString(assister,asSteam,sizeof(asSteam));
+		GetClientAuthId(assister,AuthId_Steam3,asSteam,sizeof(asSteam));
 		Format(asSteam, sizeof(asSteam),"'%s'",asSteam);
 	}
 
-	GetClientAuthString(victim,vicSteam,sizeof(vicSteam));
+	GetClientAuthId(victim,AuthId_Steam3,vicSteam,sizeof(vicSteam));
 	Format(vicSteam, sizeof(vicSteam),"'%s'",vicSteam);
 
 	new String:query[1000];
@@ -1203,7 +1213,7 @@ public DGStats(client, String:plrname[]) {
 	GetConVarString(g_hStatsURL,statsUrl,sizeof(statsUrl));
 
 	new String:steam[32];
-	GetClientAuthString(client,steam,sizeof(steam));
+	GetClientAuthId(client,AuthId_Steam3,steam,sizeof(steam));
 	if (strlen(plrname) > 0) {
 		new String: url[255];
 		Format(url,sizeof(url),"%s/dgstats.php?name=%s",statsUrl, plrname);
@@ -1252,7 +1262,7 @@ public Action:DGAddBots(client, args) {
 }
 
 public Action:DGBalance(client1, args) {
-//Tally up the DGer's
+	//Tally up the DGer's
 	new Handle:RedIndex = CreateArray(ByteCountToCells(1));
 	new Handle:BluIndex = CreateArray(ByteCountToCells(1));
 	new Handle:NonDG = CreateArray(ByteCountToCells(1));
@@ -1372,7 +1382,9 @@ public Action:DGBalance(client1, args) {
 }
 
 public CheckForBalance(client) {
-	return;
+	if (!GetConVarBool(dgDebug)) {
+		return;
+	}
 	//If the teams are already balanced or they have been balanced recently just return
 	if (balanced()) {
 		return;
@@ -1483,11 +1495,12 @@ public tellCodeMonkey(const String:tellWhat[]) {
 			continue;
 		}
 
-		GetClientAuthString(i,steam,sizeof(steam));
+		GetClientAuthId(i,AuthId_Steam3,steam,sizeof(steam));
 		//tell pete AND codemonkey so pete can examine errors when code not there
 		if (StrEqual(steam,"STEAM_0:0:20604342",false) || StrEqual(steam,"STEAM_0:0:61433652]",false)) {
 			PrintCenterText(i,"OMG LOOK AT CHAT THERES AN ERROR");
 			PrintToChat(i,"%s%s",msgColor,tellWhat);
 		}
 	}
+	LogError(tellWhat);
 }
