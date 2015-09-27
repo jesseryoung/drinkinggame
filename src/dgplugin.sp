@@ -51,6 +51,7 @@ new gVelocityOffset;
 
 new Handle:g_hStatsURL;
 new Handle:g_hRulesURL;
+new Handle:dgBottleDeath;
 
 #include "effects.sp"
 
@@ -81,7 +82,7 @@ public OnPluginStart()
 
 	g_hStatsURL = CreateConVar("dg_statsurl", "http://stats.team-brh.com/dg", "Web location where DGers can view their stats");
 	g_hRulesURL = CreateConVar("dg_rulesurl", "http://www.team-brh.com/forums/viewtopic.php?f=8&t=7666", "Web location where rules are posted for when a player types dg_info in chat");
-
+	dgBottleDeath = CreateConVar("dg_bottledeath", "1", "Spawn bottles based on how many drinks were given on death");
 	//For findtarget
 	LoadTranslations("common.phrases");
 
@@ -625,6 +626,9 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 		if (idx != -1) {
 			ReplaceString(reason[idx],sizeof(reason),","," and")
 		}
+
+		//Create the death effect based on # of drinks
+		CreateDeathEffect(victim, drinkCount);
 
 		//Print out all this info to the victim
 		PrintCenterText(victim,"%s DRINK %d BITCH",attaunt, drinkCount);
