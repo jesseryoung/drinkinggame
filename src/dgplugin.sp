@@ -86,7 +86,7 @@ public OnPluginStart()
 	g_hStatsURL = CreateConVar("dg_statsurl", "http://stats.team-brh.com/dg", "Web location where DGers can view their stats");
 	g_hRulesURL = CreateConVar("dg_rulesurl", "http://www.team-brh.com/forums/viewtopic.php?f=8&t=7666", "Web location where rules are posted for when a player types dg_info in chat");
 	dgBottleDeath = CreateConVar("dg_bottledeath", "1", "Spawn bottles based on how many drinks were given on death");
-	dgUnfairBalance = CreateConVar("dg_unfairBalance", "1", "Prevent certain heavy medic pairs from being dg-balanced separated");
+	dgUnfairBalance = CreateConVar("dg_unfairbalance", "1", "Prevent certain heavy medic pairs from being dg-balanced separated");
 	dgDebug = CreateConVar("dg_debug", "0", "Drinking Game Debug Mode");
 	//For findtarget
 	LoadTranslations("common.phrases");
