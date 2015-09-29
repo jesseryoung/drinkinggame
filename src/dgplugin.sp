@@ -8,8 +8,6 @@
 #include <tf2_stocks>
 #include <adt_trie>
 
-#define TEST_MODE 0
-
 
 #define RED_TEAM 2
 #define BLU_TEAM 3
@@ -57,6 +55,7 @@ new Handle:dgDebug;
 
 #include "helpers.sp"
 #include "effects.sp"
+#include "chug.sp"
 
 public Plugin:myinfo =
 {
@@ -81,6 +80,7 @@ public OnPluginStart()
 	RegConsoleCmd("dg_random", RandomDG);
 	RegAdminCmd("dg_add_bots", DGAddBots, ADMFLAG_GENERIC);
 	RegAdminCmd("dg_balance", DGBalance, ADMFLAG_GENERIC);
+	RegAdminCmd("dg_chuground", DGChugRound, ADMFLAG_GENERIC);
 
 
 	g_hStatsURL = CreateConVar("dg_statsurl", "http://stats.team-brh.com/dg", "Web location where DGers can view their stats");
@@ -110,6 +110,7 @@ public OnConfigsExecuted() {
 		return;
 	}
 	PrecacheSound("vo/burp05.mp3");
+	PrecacheModel("models/props_gameplay/bottle001.mdl",true);
 }
 
 //is player DG for the purposes of causing drinks
@@ -309,10 +310,12 @@ public Action:Command_Say(client,args) {
 
 	if (StrEqual(cmd,"dg_stats",false)){
 		new String: blank[255];
-		if (nextCmd == -1)
+		if (nextCmd == -1) {
 			DGStats(client, blank);
-		else
+		}
+		else {
 			DGStats(client, text[nextCmd]);
+		}
 	}
 
 
@@ -434,8 +437,9 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 	}
 
 	//return if the server killed you
-	if(attacker == 0)
+	if(attacker == 0) {
 		return;
+	}
 
 	//If vic is DCGin and attacker isn't tell them to drink
 	if (vicDCG && !atDG && !asDG) {
@@ -1119,7 +1123,7 @@ public sortDrinks(elem1, elem2, const array[],Handle:hndl) {
 }
 
 public GetTaunt(String:steamID[32], String:buf[], bufLen, bool:returnError) {
-	if (StrContains(steamID, "BOT")) {
+	if (StrContains(steamID, "BOT") != -1 ) {
 		return;
 	}
 	new String:rtn[100] = "";
@@ -1136,14 +1140,13 @@ public GetTaunt(String:steamID[32], String:buf[], bufLen, bool:returnError) {
 	new Handle:query = SQL_Query(db,strQuery);
 	SQL_UnlockDatabase(db);
 
-	if (query == INVALID_HANDLE) {
+	if (query == INVALID_HANDLE && returnError) {
 		SQL_GetError(db,rtn,sizeof(rtn));
 		PrintToServer(rtn);
 	} else if(SQL_FetchRow(query)) {
 		SQL_FetchString(query,0,rtn,sizeof(rtn));
-	} else if(returnError) {
-		strcopy(buf,bufLen,rtn);
 	}
+	strcopy(buf,bufLen,rtn);
 }
 
 
