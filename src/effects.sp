@@ -13,44 +13,52 @@ public Action:SpawnDeathEffect(Handle:timer, Handle:data) {
 	new client = ReadPackCell(data);
 	new amount = ReadPackCell(data);
 	if (amount < 0) amount = 0;
-	new Float:pos[3];
-	new Float:ang[3];
-
-	GetEntPropVector(client, Prop_Data, "m_vecOrigin", pos)
-	pos[2] += 40; //Don't put at players feet but instead the middle of their character
-	decl String:modelName[255] = "models/props_gameplay/bottle001.mdl";
-	PrecacheModel(modelName,true);
 	for (new i = 0; i < amount; i++) {
-		new ent = CreateEntityByName("prop_physics_override");
 		//Create the random angle/velocities of each bottle, based on adding to players velocity
 		new Float:vel[3];
-		ang[0] = GetRandomFloat(0.0, 359.0);
-		ang[1] = GetRandomFloat(0.0, 359.0);
-		ang[2] = GetRandomFloat(0.0, 359.0);
 		GetEntPropVector(client, Prop_Data, "m_vecVelocity", vel)
 		ScaleVector(vel, 1.8);
 		vel[0] += GetRandomFloat(-150.0, 150.0);
 		vel[1] += GetRandomFloat(-150.0, 150.0);
 		vel[2] += GetRandomFloat(-30.0, 90.0);
-
-		DispatchKeyValue(ent,"damagetoenablemotion","0");
-		DispatchKeyValue(ent,"forcetoenablemotion","0");
-		DispatchKeyValue(ent,"Damagetype","0");
-		DispatchKeyValue(ent,"disablereceiveshadows","1");
-		//DispatchKeyValue(ent,"massScale","0");
-		DispatchKeyValue(ent,"nodamageforces","0");
-		DispatchKeyValue(ent,"shadowcastdist","0");
-		DispatchKeyValue(ent,"physdamagescale", "0.0");
-		DispatchKeyValue(ent,"disableshadows","1");
-		DispatchKeyValue(ent,"physicsmode","3");
-		DispatchKeyValue(ent,"spawnflags","4");
-		DispatchKeyValue(ent,"model",modelName);
-		DispatchSpawn(ent);
-		TeleportEntity(ent, pos, ang, vel);
-		SetEntityMoveType(ent, MOVETYPE_VPHYSICS);
-
-		CreateTimer(12.0, DestroyDeathEffect, ent);
+		SpawnBottleAtClient(client, vel);
 	}
+}
+
+stock SpawnBottleAtClient(client, Float:avel[3]) {
+	new ent = CreateEntityByName("prop_physics_override");
+	//Create the random angle/velocities of each bottle, based on adding to players velocity
+	new Float:cvel[3];
+	GetEntPropVector(client, Prop_Data, "m_vecVelocity", cvel)
+
+	new Float:vel[3];
+	AddVectors(cvel, avel, vel);
+
+	new Float:pos[3];
+	//GetEntPropVector(client, Prop_Data, "m_vecOrigin", pos)
+	GetClientEyePosition(client, pos);
+
+	new Float:ang[3];
+	ang[0] = GetRandomFloat(0.0, 359.0);
+	ang[1] = GetRandomFloat(0.0, 359.0);
+	ang[2] = GetRandomFloat(0.0, 359.0);
+
+	DispatchKeyValue(ent,"damagetoenablemotion","0");
+	DispatchKeyValue(ent,"forcetoenablemotion","0");
+	DispatchKeyValue(ent,"Damagetype","0");
+	DispatchKeyValue(ent,"disablereceiveshadows","1");
+	//DispatchKeyValue(ent,"massScale","0");
+	DispatchKeyValue(ent,"nodamageforces","0");
+	DispatchKeyValue(ent,"shadowcastdist","0");
+	DispatchKeyValue(ent,"physdamagescale", "0.0");
+	DispatchKeyValue(ent,"disableshadows","1");
+	DispatchKeyValue(ent,"physicsmode","3");
+	DispatchKeyValue(ent,"spawnflags","4");
+	DispatchKeyValue(ent,"model","models/props_gameplay/bottle001.mdl");
+	DispatchSpawn(ent);
+	TeleportEntity(ent, pos, ang, vel);
+	SetEntityMoveType(ent, MOVETYPE_VPHYSICS);
+	CreateTimer(12.0, DestroyDeathEffect, ent);
 }
 
 public Action:DestroyDeathEffect(Handle:timer, any:ent) {
