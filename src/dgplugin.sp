@@ -63,7 +63,7 @@ public Plugin:myinfo =
 	name = "Drinking game plugin",
 	author = "Jesse Young (CodeMonkey)",
 	description = "Sends players with [DG] in their name a message when they should drink",
-	version = "2.0",
+	version = "2.1",
 	url = "http://www.team-brh.com"
 }
 
@@ -357,8 +357,7 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) 
 	if (!buildingDeath) {
 		flags = GetEventInt(event,"death_flags")
 		//Only kill the sprite if its a player death
-		new client = GetClientOfUserId(victim);
-		KillSprite(client);
+		KillSprite(victim);
 	}
 
 	//Get weapon that caused death
