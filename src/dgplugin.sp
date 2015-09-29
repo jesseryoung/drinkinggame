@@ -1119,7 +1119,7 @@ public sortDrinks(elem1, elem2, const array[],Handle:hndl) {
 }
 
 public GetTaunt(String:steamID[32], String:buf[], bufLen, bool:returnError) {
-	if (StrContains(steamID, "BOT")) {
+	if (StrContains(steamID, "BOT") != -1 ) {
 		return;
 	}
 	new String:rtn[100] = "";
@@ -1136,14 +1136,13 @@ public GetTaunt(String:steamID[32], String:buf[], bufLen, bool:returnError) {
 	new Handle:query = SQL_Query(db,strQuery);
 	SQL_UnlockDatabase(db);
 
-	if (query == INVALID_HANDLE) {
+	if (query == INVALID_HANDLE && returnError) {
 		SQL_GetError(db,rtn,sizeof(rtn));
 		PrintToServer(rtn);
 	} else if(SQL_FetchRow(query)) {
 		SQL_FetchString(query,0,rtn,sizeof(rtn));
-	} else if(returnError) {
-		strcopy(buf,bufLen,rtn);
 	}
+	strcopy(buf,bufLen,rtn);
 }
 
 
