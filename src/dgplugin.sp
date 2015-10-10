@@ -77,7 +77,12 @@ public OnPluginStart()
 	RegConsoleCmd("say",Command_Say);
 	RegConsoleCmd("dg_update",Update);
 	RegConsoleCmd("dg_reloadmelee",LoadWepMults);
-	RegConsoleCmd("dg_random", RandomDG);
+	RegConsoleCmd("dg_drinklist",DGDrinkList);
+	RegConsoleCmd("dg_mytaunt",DGMyTaunt);
+	RegConsoleCmd("dg_settaunt",DGSetTaunt);
+	RegConsoleCmd("dg_info",DGInfo);
+	RegConsoleCmd("dg_stats",DGStats);
+	RegAdminCmd("dg_random", DGRandomDG, ADMFLAG_GENERIC);
 	RegAdminCmd("dg_add_bots", DGAddBots, ADMFLAG_GENERIC);
 	RegAdminCmd("dg_balance", DGBalance, ADMFLAG_GENERIC);
 	RegAdminCmd("dg_chuground", DGChugRound, ADMFLAG_GENERIC);
@@ -212,7 +217,7 @@ public Action:LoadWepMults(client,args) {
 	return Plugin_Handled;
 }
 
-public Action:RandomDG(client, args) {
+public Action:DGRandomDG(client, args) {
 	new String:text[200];
 	GetCmdArgString(text,sizeof(text));
 	StripQuotes(text);
@@ -269,55 +274,8 @@ public Action:Command_Say(client,args) {
 		return Plugin_Continue;
 	}
 
-	//Get the first argument and index of other argument
-	new String:cmd[32];
-	new nextCmd = BreakString(text,cmd,sizeof(cmd));
-	if (cmd[0] == '!') {
-		strcopy(cmd[0],sizeof(cmd),cmd[1]);
-	}
-
-	new String:steamID[32];
-	GetClientAuthId(client,AuthId_Steam2,steamID,sizeof(steamID))
-
-	if (StrEqual(cmd,"dg_drinklist",false)) {
-		ReadList(client,0);
-	}
-	if (StrEqual(cmd,"dg_mytaunt",false)) {
-		new String:tag[100];
-		GetTaunt(steamID,tag,sizeof(tag),true);
-		PrintToChat(client,"%s%s",msgColor,tag);
-	}
-	if (StrEqual(cmd,"dg_settaunt",false)) {
-		if (nextCmd == -1)
-			PrintToChat(client,"%sYou must specify a taunt to set",msgColor)
-		else {
-			new String:taunt[50];
-			strcopy(taunt,51,text[nextCmd]);
-			if (SetTaunt(steamID,text[nextCmd])) {
-				GetTaunt(steamID,taunt,sizeof(taunt),true);
-				PrintToChat(client,"%staunt added: '%s'",msgColor,taunt)
-			} else
-			PrintToChat(client, "%sThere was an error adding this taunt (tell CodeMonkey)",msgColor);
-		}
-	}
-
 	new String:forumPost[300];
 	GetConVarString(g_hRulesURL,forumPost,sizeof(forumPost));
-
-	if (StrEqual(cmd,"dg_info",false)) {
-		ShowMOTDPanel(client,"DG Rules",forumPost,MOTDPANEL_TYPE_URL);
-	}
-
-	if (StrEqual(cmd,"dg_stats",false)){
-		new String: blank[255];
-		if (nextCmd == -1) {
-			DGStats(client, blank);
-		}
-		else {
-			DGStats(client, text[nextCmd]);
-		}
-	}
-
 
 	if (StrContains(text, "dg",false) != -1 || StrContains(text, "dcg",false) != -1
 		|| StrContains(text, "sg",false) != -1 || StrContains(text, "scg",false) != -1) {
@@ -335,8 +293,68 @@ public Action:Command_Say(client,args) {
 			ShowMOTDPanel(client,"DG Rules",forumPost,MOTDPANEL_TYPE_URL);
 	}
 
+	//If they're trying to run a dg command, run it as a client command as if they entered it in console
+	if (StrContains(text, "dg_", false) != -1) {
+		ClientCommand(client, text);
+	}
+
 	return Plugin_Continue;
 }
+
+public Action:DGMyTaunt(int client, args) {
+	new String:steamID[32];
+	GetClientAuthId(client,AuthId_Steam2,steamID,sizeof(steamID))
+	new String:tag[100];
+	GetTaunt(steamID,tag,sizeof(tag),true);
+	PrintToChat(client,"%s%s",msgColor,tag);
+	return Plugin_Handled;
+}
+
+public Action:DGSetTaunt(int client, args) {
+	new String:text[128];
+	GetCmdArgString(text, sizeof(text));
+	if (strlen(text) < 1) {
+		PrintToChat(client,"%sYou must specify a taunt to set",msgColor)
+	}
+	else {
+		new String:steamID[32];
+		GetClientAuthId(client,AuthId_Steam2,steamID,sizeof(steamID))
+		new String:taunt[50];
+		if (SetTaunt(steamID,text)) {
+			GetTaunt(steamID,taunt,sizeof(taunt),true);
+			PrintToChat(client,"%staunt added: '%s'",msgColor,taunt)
+		} else
+		PrintToChat(client, "%sThere was an error adding this taunt (tell CodeMonkey)",msgColor);
+	}
+	return Plugin_Handled;
+}
+
+public Action:DGInfo(int client, args) {
+	new String:forumPost[300];
+	GetConVarString(g_hRulesURL,forumPost,sizeof(forumPost));
+	ShowMOTDPanel(client,"DG Rules",forumPost,MOTDPANEL_TYPE_URL);
+	return Plugin_Handled;
+}
+
+public Action:DGStats(int client, args) {
+	new String:text[128];
+	GetCmdArgString(text, sizeof(text));
+	new String:cmd[32];
+	new nextCmd = BreakString(text,cmd,sizeof(cmd));
+	new String:blank[255];
+	if (nextCmd == -1) {
+		ShowDGStats(client, blank);
+	}
+	else {
+		ShowDGStats(client, text[nextCmd]);
+	}
+}
+
+public Action:DGDrinkList(int client, args) {
+	ReadList(client,0);
+	return Plugin_Handled;
+}
+
 
 public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast) {
 	new bool:buildingDeath = StrEqual(name,"object_destroyed",false);
@@ -1213,7 +1231,7 @@ public StringToUpper(String:str[]) {
 	}
 }
 
-public DGStats(client, String:plrname[]) {
+public ShowDGStats(client, String:plrname[]) {
 	new String:statsUrl[300];
 	GetConVarString(g_hStatsURL,statsUrl,sizeof(statsUrl));
 
