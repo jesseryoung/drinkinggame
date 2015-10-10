@@ -1,6 +1,12 @@
 new bool:canChugRound = true;
 
-public Action:DGChugRound(client1, args) {
+public Action:DGChugRound(int client1, int args) {
+	new String:str[256];
+	GetCmdArgString(str, sizeof(str));
+
+	if (strlen(str) < 1) {
+		str = "CHUG ROUND!!! CHEERS";
+	}
 	if (!canChugRound) {
 		//PrintToChat(client1, "There has been a chug round too recently to chug again");
 		return Plugin_Handled;
@@ -15,7 +21,7 @@ public Action:DGChugRound(client1, args) {
 		GetClientName(i, playerName,sizeof(playerName));
 		if (mayDrink(playerName) || willDrink(playerName)) {
 			EmitSoundToClient(i,"vo/burp05.mp3");
-			PrintCenterText(i,"CHUG ROUND!!! CHEERS");
+			PrintCenterText(i,str);
 			if (IsPlayerAlive(i)) {
 			 	new Float:vel[3];
 				new Float:ang[3];
