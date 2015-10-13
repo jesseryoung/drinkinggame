@@ -1,6 +1,7 @@
 new TotalDrinks[MAXPLAYERS + 1];
 new BuildingDrinks[MAXPLAYERS + 1];
 new DeadRingerDrinks[MAXPLAYERS + 1];
+new MedicDrinks[MAXPLAYERS + 1];
 
 stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 	new bool:buildingDeath = StrEqual(name,"object_destroyed",false);
@@ -105,6 +106,16 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 	new bool:atDomRev = (flags & 1 || flags & 4);
 	new bool:asDomRev = (flags & 2 || flags & 8) && asDG;
 
+	new healingTarget = TF2_GetHealingTarget(victim);
+	if (healingTarget != -1) {
+		new patient = GetClientOfUserId(healingTarget);
+		new String:patientName[100];
+		GetClientName(patient, patientName,sizeof(patientName))
+		if (causesDrinks(patientName) && atDG) {
+			MedicDrinks[patient] += 1;
+		}
+	}
+
 	if (buildingDeath) {
 		TotalDrinks[victim] += 1;
 		BuildingDrinks[victim] += 1;
@@ -120,7 +131,7 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 		new drinkCount = 0;
 		new atDrinkCount = 0;
 		new asDrinkCount = 0;
-		new String: reason[100] = "";
+		new String: reason[150] = "";
 
 		if (atDG) {
 		//Add one for attacker drinks caused
@@ -185,12 +196,6 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 			PushArrayString(drinkText, drinkTextBuffer);
 		}
 
-		for(new i = 1; i <= MaxClients; i++) {
-		    if(IsClientInGame(i) && !IsFakeClient(i)) {
-		    	//Check if this is a medic and he was healing someone - make them drink
-		    }
-		}
-
 		//Double for assister domination
 		if (asDomRev && asDG) {
 			drinkCount += 2;
@@ -206,6 +211,20 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 			StrCat(reason,sizeof(reason),", [DG] killed your buildings last life");
 			Format(drinkTextBuffer, sizeof(drinkTextBuffer),"[+%d]Your buildings were killed that life",BuildingDrinks[victim]);
 			PushArrayString(drinkText, drinkTextBuffer);
+		}
+
+		//Add drinks if a [DG] medic killed by [DG] while healing you
+		if (MedicDrinks[victim] > 0) {
+			drinkCount += MedicDrinks[victim];
+			if (strlen(reason) > 1) {
+				StrCat(reason,sizeof(reason),", a [DG] medic killed by [DG] while healing you");
+			}
+			else {
+				StrCat(reason,sizeof(reason),"A [DG] medic killed by [DG] while healing you");
+			}
+			Format(drinkTextBuffer, sizeof(drinkTextBuffer),"[+%d]A medic died healing you that life",MedicDrinks[victim]);
+			PushArrayString(drinkText, drinkTextBuffer);
+			MedicDrinks[victim] = 0;
 		}
 
 		if (flags & TF_DEATHFLAG_DEADRINGER ) {
@@ -258,6 +277,9 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 }
 
 stock GiveDrinks(victim, drinkCount, attacker, assister, at_drinks, as_drinks, String:weaponName[], String:reason[], Handle:menuLines) {
+	if (drinkCount <= 0) {
+		return;
+	}
 	//Get their names
 	new String:vicName[50];
 	new String:attackName[50];

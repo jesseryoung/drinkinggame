@@ -51,6 +51,7 @@ new Handle:dgUnfairBalance;
 new Handle:dgDebug;
 
 #include "helpers.sp"
+#include "tf2_extra.sp"
 #include "effects.sp"
 #include "chug.sp"
 #include "drinks.sp"
