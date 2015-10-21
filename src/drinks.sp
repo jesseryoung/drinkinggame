@@ -55,17 +55,31 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 	new Handle:drinkText = CreateArray(12);
 	new String:drinkTextBuffer[100];
 
-	if (GetEventInt(event,"damagebits") & DMG_VEHICLE) {
-		TotalDrinks[victim] += 6;
-
-		PushArrayString(drinkText, "[+6]You got run over by a train");
-		GiveDrinks(victim, 6, 0, 0, 0, 0, "train", "Don't get disTRACKted, drink 6", drinkText);
-		return;
-	}
-
-	//return if the server killed you
 	if(attacker == 0) {
-		return;
+		if (GetEventInt(event,"damagebits") & DMG_VEHICLE) {
+			TotalDrinks[victim] += 6;
+			PrintCenterText(victim,"DRINK SIX BITCH");
+			PrintToChat(victim,"%sDon't get disTRACKted, drink 6",msgColor);	
+			EmitSoundToClient(victim,"vo/burp05.mp3");
+
+			Update_DG_DB(victim,0,victim,6,0,6,"train");
+
+			new Handle:myPanel = CreatePanel();
+			new String:panelBuffer[100];
+			DrawPanelText(myPanel,"[+6]You got run over by a train");
+			DrawPanelText(myPanel,"--------------------------------");
+			DrawPanelText(myPanel,"Total: 6");
+			DrawPanelText(myPanel," ");
+			Format(panelBuffer,sizeof(panelBuffer),"Total drinks this round: %d",TotalDrinks[victim]);
+			DrawPanelText(myPanel,panelBuffer);
+			DrawPanelItem(myPanel,"Close");
+			SendPanelToClient(myPanel,victim,MenuHandler1,5);		
+			CloseHandle(myPanel);
+			return;
+		}
+		else {
+			return;
+		}
 	}
 
 	//If vic is DCGin and attacker isn't tell them to drink
