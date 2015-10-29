@@ -219,6 +219,7 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 		//Suicide
 		if (victim_id == attacker_id) {
 			drinkCount += 2;
+			atDrinkCount = 0;
 			reason =  "killed by yourself";
 			PushArrayString(drinkText, "[+1]You killed yourself");
 		}
@@ -243,6 +244,8 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 
 		//Give them the victim their drinks
 		TotalDrinks[victim] += drinkCount;
+		GivenDrinks[attacker] += atDrinkCount;
+		GivenDrinks[assister] += asDrinkCount;
 		GiveDrinks(victim, drinkCount, attacker, assister, atDrinkCount, asDrinkCount, weaponName, reason, drinkText);
 	}
 
@@ -285,9 +288,12 @@ stock GiveDrinks(victim, drinkCount, attacker, assister, at_drinks, as_drinks, S
 	PrintCenterText(victim,"%s DRINK %d BITCH",attaunt, drinkCount);
 	PrintToChat(victim,"%sYou were %s drink %d",msgColor, reason, drinkCount);
 
-	PrintToChat(attacker, "%sYou made %s drink %d. Good job!",msgColor, vicName,drinkCount);
 	if (asDG) {
-		PrintToChat(assister,"%sYou made %s drink %d. Good job!",msgColor, vicName,drinkCount);
+		PrintToChat(attacker, "%sYou and %s made %s drink %d. Good job!",msgColor,assistName,vicName,drinkCount);	
+		PrintToChat(assister, "%s%s and You made %s drink %d. Good job!",msgColor,attackName,vicName,drinkCount);	
+	}
+	else {
+		PrintToChat(attacker,"%sYou made %s drink %d. Good job!",msgColor, vicName,drinkCount);
 	}
 	if (GetConVarBool(dgDebug)) {
 		EmitSoundToClient(victim,"vo/burp05.mp3");
