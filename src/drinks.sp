@@ -2,6 +2,7 @@ new TotalDrinks[MAXPLAYERS + 1];
 new BuildingDrinks[MAXPLAYERS + 1];
 new DeadRingerDrinks[MAXPLAYERS + 1];
 new MedicDrinks[MAXPLAYERS + 1];
+new GivenDrinks[MAXPLAYERS + 1];
 
 stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 	new bool:buildingDeath = StrEqual(name,"object_destroyed",false);
@@ -82,6 +83,7 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 		}
 	}
 
+	//Handle DCG
 	//If vic is DCGin and attacker isn't tell them to drink
 	if (vicDCG && !atDG && !asDG) {
 		new Handle:myPanel = CreatePanel();
@@ -131,7 +133,6 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 	}
 
 	if (buildingDeath) {
-		TotalDrinks[victim] += 1;
 		BuildingDrinks[victim] += 1;
 		//should this update for dead ringer coward deaths?
 		Update_DG_DB(atDG ? attacker : 0, asDG ? assister : 0, victim, 1, 1, 1, weaponName);
@@ -145,10 +146,10 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 		new drinkCount = 0;
 		new atDrinkCount = 0;
 		new asDrinkCount = 0;
-		new String: reason[150] = "";
+		new String:reason[150] = "";
 
 		if (atDG) {
-		//Add one for attacker drinks caused
+			//Add one for attacker drinks caused
 			atDrinkCount += 1;
 			drinkCount += 1;
 			StrCat(reason,sizeof(reason), "killed by [DG]");
@@ -193,7 +194,7 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 			}
 		}
 
-		//Double for taunt kill if attacker was dg'n
+		//6 for taunt kill if attacker was dg'n
 		if (tauntKill && atDG) {
 			drinkCount += 6;
 			atDrinkCount+=6;
@@ -201,7 +202,7 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 			PushArrayString(drinkText, "[+6]Killed with a taunt kill");
 		}
 
-		//Double for attacker domination
+		//2 for attacker domination
 		if (atDomRev & atDG) {
 			drinkCount += 2;
 			atDrinkCount+=2;
@@ -210,7 +211,7 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 			PushArrayString(drinkText, drinkTextBuffer);
 		}
 
-		//Double for assister domination
+		//2 for assister domination
 		if (asDomRev && asDG) {
 			drinkCount += 2;
 			asDrinkCount+=2;
@@ -275,6 +276,7 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 		CreateDeathEffect(victim, drinkCount);
 
 		//Give them the victim their drinks
+		TotalDrinks[victim] += drinkCount;
 		GiveDrinks(victim, drinkCount, attacker, assister, atDrinkCount, asDrinkCount, weaponName, reason, drinkText);
 	}
 
@@ -327,7 +329,6 @@ stock GiveDrinks(victim, drinkCount, attacker, assister, at_drinks, as_drinks, S
 	}
 	new Handle:panel = CreatePanel();
 	new String:panelBuffer[100];
-	TotalDrinks[victim] += drinkCount;
 	for (new i=0;i<GetArraySize(menuLines);i++) {
 		new String:line[100];
 		GetArrayString(menuLines, i, line, sizeof(line));
@@ -342,4 +343,10 @@ stock GiveDrinks(victim, drinkCount, attacker, assister, at_drinks, as_drinks, S
 	DrawPanelItem(panel,"Close");
 	SendPanelToClient(panel,victim,MenuHandler1,5);
 	CloseHandle(panel);
+}
+
+public Action:DGDrinkStatus(int client, args) {
+	PrintToChat(client, "You've had %i drinks this round", TotalDrinks[client]);
+	PrintToChat(client, "You've made others drink %i drinks this round", GivenDrinks[client]);
+	return Plugin_Handled;
 }
