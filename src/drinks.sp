@@ -43,13 +43,12 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 	GetClientName(assister, assistName,sizeof(assistName))
 
 	//See whos playin DG
-	new bool:vicDCG = willDrink(vicName);
-	new bool:vicDG  = mayDrink (vicName);
+	new bool:vicDG  = willDrink(vicName);
 	new bool:atDG   = causesDrinks(attackName);
 	new bool:asDG   = causesDrinks(assistName);
 
 	//Exit if vic isnt DGin
-	if (!vicDG && !vicDCG) {
+	if (!vicDG) {
 		return;
 	}
 
@@ -82,39 +81,6 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 			return;
 		}
 	}
-
-	//Handle DCG
-	//If vic is DCGin and attacker isn't tell them to drink
-	if (vicDCG && !atDG && !asDG) {
-		new Handle:myPanel = CreatePanel();
-		new String:panelBuffer[100];
-
-		//Increment drinks
-		TotalDrinks[victim] += 1;
-		PrintCenterText(victim,"DRINK ONE BITCH");
-		PrintToChat(victim,"%sYou're DCGn, drink one",msgColor);
-
-		Update_DG_DB(0,0,victim,0,0,1,"");
-
-		new String:say[255];
-		Format(say, sizeof(say),"%s killed you, drink %d", attackName, 1);
-
-		EmitSoundToClient(victim,"vo/burp05.mp3");
-		//Display the window
-		DrawPanelText(myPanel,"[+1]You were killed while DCGing");
-		DrawPanelText(myPanel,"--------------------------------");
-		DrawPanelText(myPanel,"Total: 1");
-		DrawPanelText(myPanel," ");
-		Format(panelBuffer,sizeof(panelBuffer),"Total drinks this round: %d",TotalDrinks[victim]);
-		DrawPanelText(myPanel,panelBuffer);
-		DrawPanelItem(myPanel,"Close");
-		SendPanelToClient(myPanel,victim,MenuHandler1,5);
-		CloseHandle(myPanel);
-		return;
-	}
-
-	//We don't care about the distinction between the two anymore
-	vicDG = (vicDG || vicDCG);
 
 	new bool:tauntKill = (StrContains(weaponName,"taunt",false) != -1);
 

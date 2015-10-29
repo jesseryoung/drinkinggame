@@ -135,18 +135,13 @@ public bool:causesDrinks(String:playerName[]) {
 }
 
 //is player DG for the purposes of receiving drinks
-public bool:mayDrink(String:playerName[]) {
+public bool:willDrink(String:playerName[]) {
 	if(StrContains(playerName,"[DG]",false) != -1) {
 		return true;
 	}
 	if(StrContains(playerName,"[SG]",false) != -1) {
 		return true;
 	}
-	return false;
-}
-
-//is player DCG for the purposes of receiving drinks
-public bool:willDrink(String:playerName[]) {
 	if(StrContains(playerName,"[DCG]",false) != -1) {
 		return true;
 	}
