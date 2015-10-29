@@ -186,6 +186,18 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 			PushArrayString(drinkText, drinkTextBuffer);
 		}
 
+		if (TF2_GetPlayerClass(victim) == TF2_GetClass("medic")) {
+			new uberWeapon = GetPlayerWeaponSlot(victim, 1);
+			new Float:chargeLevel = GetEntPropFloat(uberWeapon, Prop_Send, "m_flChargeLevel");
+			if (chargeLevel > 0.99) {
+				drinkCount += 1;
+				atDrinkCount += 1;
+				StrCat(reason,sizeof(reason),", you died with full ubercharge");
+				Format(drinkTextBuffer, sizeof(drinkTextBuffer), "[+1]You died with full ubercharge!");
+				PushArrayString(drinkText, drinkTextBuffer);
+			}
+		}
+
 		//Display how many drinks that have to take for their building deaths
 		if (BuildingDrinks[victim] > 0) {
 			drinkCount += BuildingDrinks[victim];
