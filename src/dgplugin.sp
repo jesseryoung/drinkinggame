@@ -81,11 +81,11 @@ public OnPluginStart()
 	RegConsoleCmd("dg_settaunt",DGSetTaunt);
 	RegConsoleCmd("dg_info",DGInfo);
 	RegConsoleCmd("dg_stats",DGStats);
+	RegConsoleCmd("dg_mystatus",DGDrinkStatus);
 	RegAdminCmd("dg_random", DGRandomDG, ADMFLAG_GENERIC);
 	RegAdminCmd("dg_add_bots", DGAddBots, ADMFLAG_GENERIC);
 	RegAdminCmd("dg_balance", DGBalance, ADMFLAG_GENERIC);
 	RegAdminCmd("dg_chuground", DGChugRound, ADMFLAG_GENERIC);
-
 
 	g_hStatsURL = CreateConVar("dg_statsurl", "http://stats.team-brh.com/dg", "Web location where DGers can view their stats");
 	g_hRulesURL = CreateConVar("dg_rulesurl", "http://www.team-brh.com/forums/viewtopic.php?f=8&t=7666", "Web location where rules are posted for when a player types dg_info in chat");
@@ -100,7 +100,6 @@ public OnPluginStart()
 
 	gVelocityOffset = FindSendPropInfo("CBasePlayer", "m_vecVelocity[0]");
 }
-
 public OnPluginEnd() {
 	//Kill all sprites on end
 	for(new i = 1; i <= MaxClients; i++)
@@ -135,18 +134,13 @@ public bool:causesDrinks(String:playerName[]) {
 }
 
 //is player DG for the purposes of receiving drinks
-public bool:mayDrink(String:playerName[]) {
+public bool:willDrink(String:playerName[]) {
 	if(StrContains(playerName,"[DG]",false) != -1) {
 		return true;
 	}
 	if(StrContains(playerName,"[SG]",false) != -1) {
 		return true;
 	}
-	return false;
-}
-
-//is player DCG for the purposes of receiving drinks
-public bool:willDrink(String:playerName[]) {
 	if(StrContains(playerName,"[DCG]",false) != -1) {
 		return true;
 	}
@@ -485,9 +479,6 @@ public SentryDeath(Handle:event, const String:name[], bool:dontBroadcast) {
 public Event_Round_Win(Handle:event, const String:name[], bool:dontBroadcast) {
 	new team = GetEventInt(event,"team")
 
-	//Get all clients
-	new bool:GetYaDikSuk = false;
-
 	//See if there are any drinkers that round
 	new bool:drinkers = false;
 	for (new i = 1; i <= MaxClients; i++) {
@@ -508,14 +499,6 @@ public Event_Round_Win(Handle:event, const String:name[], bool:dontBroadcast) {
 
 
 		if (causesDrinks(playerName)){
-
-			//See if HuntersPlaying
-			new String:SteamID[32];
-			GetClientAuthId(i,AuthId_Steam2,SteamID,sizeof(SteamID));
-			//lolwut
-			if (StrEqual(SteamID,"STEAM_0:1:6219443",false))
-				GetYaDikSuk = true;
-
 			if (!drinkers) {
 				PrintToChat(i, "%sNo one even drank that round, get killing you drunks",msgColor);
 			}
@@ -572,9 +555,6 @@ public Event_Round_Win(Handle:event, const String:name[], bool:dontBroadcast) {
 		}
 	}
 
-	if (GetYaDikSuk)
-		PrintCenterTextAll("GIT YA DIK SUK!");
-
 	new String:TopDrinkers[(MAXPLAYERS + 1)*(66)];
 	GetTopDrinkers(TopDrinkers,sizeof(TopDrinkers),5);
 	//If there is drinkers that round print out the top 5 DGers
@@ -584,11 +564,13 @@ public Event_Round_Win(Handle:event, const String:name[], bool:dontBroadcast) {
 
 	for (new start = 1; start <= MaxClients; start++) {
 		TotalDrinks[start] = 0;
+		GivenDrinks[start] = 0;
 	}
 }
 
 public OnClientDisconnect(client) {
-	TotalDrinks[client]=0
+	TotalDrinks[client] = 0;
+	GivenDrinks[client] = 0;
 	KillSprite(client);
 }
 
@@ -668,24 +650,22 @@ public Action:Update(client,args) {
 }
 
 public Action:ReadList(client, start) {
-
-	new max_clients = GetMaxClients()
-	new clients[max_clients]
-
-	for (new s = 0; s < max_clients; s++){
-		clients[s] = s+1
+	new clients[MaxClients];
+	for (new s = 0; s < MaxClients; s++){
+		clients[s] = s+1;
 	}
 
-	SortCustom1D(clients,max_clients,sortDrinks)
+	SortCustom1D(clients,MaxClients,sortDrinks)
 
 	new String:name[64]
-	new String:rtn[max_clients][1000];
+	new String:rtn[MaxClients][1000];
 	new numDgers = 0;
-	for (new i = 1; i <= MaxClients; i++) {
-		if (!IsClientInGame(clients[i]))
+	for (new i = 0; i < MaxClients; i++) {
+		if (!IsClientConnected(clients[i]) && !IsClientInGame(clients[i])) {
 			continue;
+		}
 
-		GetClientName(clients[i],name,sizeof(name))
+		GetClientName(clients[i],name,sizeof(name));
 
 		//Only count people with drinks
 		if (TotalDrinks[clients[i]] > 0) {
@@ -760,22 +740,20 @@ public DrinkListHandler(Handle:menu, MenuAction:action, client, value) {
 }
 
 public GetTopDrinkers(String:buffer[], size, listmax) {
-	new max_clients = GetMaxClients()
-	new clients[max_clients]
+	new clients[MaxClients];
 
-	for (new start = 0; start < max_clients; start++){
-		clients[start] = start+1
+	for (new start = 0; start < MaxClients; start++){
+		clients[start] = start+1;
 	}
 
-	SortCustom1D(clients,max_clients,sortDrinks)
-
+	SortCustom1D(clients,MaxClients,sortDrinks)
 
 	new String:name[64]
 	//rtn is only going to be as big as the number of players
 	new String:rtn[(MAXPLAYERS + 1)*(sizeof(name)+4)]
-	new numDgers = 0;
-	for (new i = 1; i <= MaxClients; i++) {
-		if (numDgers >= listmax) {
+	new printed = 0;
+	for (new i = 0; i <= MaxClients; i++) {
+		if (printed >= listmax) {
 			continue;
 		}
 
@@ -787,17 +765,16 @@ public GetTopDrinkers(String:buffer[], size, listmax) {
 
 		//Only count people with drinks
 		if (TotalDrinks[clients[i]] > 0) {
-			numDgers++;
+			printed++;
 			new String:strLine[510];
-
 			Format(strLine,sizeof(strLine),"%s drank %d\n",name,TotalDrinks[clients[i]]);
-
 			StrCat(rtn,sizeof(rtn),strLine);
 		}
 	}
 
 	strcopy(buffer,size,rtn);
 }
+
 
 
 public sortDrinks(elem1, elem2, const array[],Handle:hndl) {

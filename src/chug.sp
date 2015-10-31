@@ -19,7 +19,7 @@ public Action:DGChugRound(int client1, int args) {
 		}
 		new String:playerName[64];
 		GetClientName(i, playerName,sizeof(playerName));
-		if (mayDrink(playerName) || willDrink(playerName)) {
+		if (willDrink(playerName)) {
 			EmitSoundToClient(i,"vo/burp05.mp3");
 			PrintCenterText(i,str);
 			if (IsPlayerAlive(i)) {

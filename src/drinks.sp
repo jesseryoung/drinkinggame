@@ -2,6 +2,7 @@ new TotalDrinks[MAXPLAYERS + 1];
 new BuildingDrinks[MAXPLAYERS + 1];
 new DeadRingerDrinks[MAXPLAYERS + 1];
 new MedicDrinks[MAXPLAYERS + 1];
+new GivenDrinks[MAXPLAYERS + 1];
 
 stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 	new bool:buildingDeath = StrEqual(name,"object_destroyed",false);
@@ -42,63 +43,44 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 	GetClientName(assister, assistName,sizeof(assistName))
 
 	//See whos playin DG
-	new bool:vicDCG = willDrink(vicName);
-	new bool:vicDG  = mayDrink (vicName);
+	new bool:vicDG  = willDrink(vicName);
 	new bool:atDG   = causesDrinks(attackName);
 	new bool:asDG   = causesDrinks(assistName);
 
 	//Exit if vic isnt DGin
-	if (!vicDG && !vicDCG) {
+	if (!vicDG) {
 		return;
 	}
 
 	new Handle:drinkText = CreateArray(12);
 	new String:drinkTextBuffer[100];
 
-	if (GetEventInt(event,"damagebits") & DMG_VEHICLE) {
-		TotalDrinks[victim] += 6;
-
-		PushArrayString(drinkText, "[+6]You got run over by a train");
-		GiveDrinks(victim, 6, 0, 0, 0, 0, "train", "Don't get disTRACKted, drink 6", drinkText);
-		return;
-	}
-
-	//return if the server killed you
 	if(attacker == 0) {
-		return;
+		if (GetEventInt(event,"damagebits") & DMG_VEHICLE) {
+			TotalDrinks[victim] += 6;
+			PrintCenterText(victim,"DRINK SIX BITCH");
+			PrintToChat(victim,"%sDon't get disTRACKted, drink 6",msgColor);	
+			EmitSoundToClient(victim,"vo/burp05.mp3");
+
+			Update_DG_DB(victim,0,victim,6,0,6,"train");
+
+			new Handle:myPanel = CreatePanel();
+			new String:panelBuffer[100];
+			DrawPanelText(myPanel,"[+6]You got run over by a train");
+			DrawPanelText(myPanel,"--------------------------------");
+			DrawPanelText(myPanel,"Total: 6");
+			DrawPanelText(myPanel," ");
+			Format(panelBuffer,sizeof(panelBuffer),"Total drinks this round: %d",TotalDrinks[victim]);
+			DrawPanelText(myPanel,panelBuffer);
+			DrawPanelItem(myPanel,"Close");
+			SendPanelToClient(myPanel,victim,MenuHandler1,5);		
+			CloseHandle(myPanel);
+			return;
+		}
+		else {
+			return;
+		}
 	}
-
-	//If vic is DCGin and attacker isn't tell them to drink
-	if (vicDCG && !atDG && !asDG) {
-		new Handle:myPanel = CreatePanel();
-		new String:panelBuffer[100];
-
-		//Increment drinks
-		TotalDrinks[victim] += 1;
-		PrintCenterText(victim,"DRINK ONE BITCH");
-		PrintToChat(victim,"%sYou're DCGn, drink one",msgColor);
-
-		Update_DG_DB(0,0,victim,0,0,1,"");
-
-		new String:say[255];
-		Format(say, sizeof(say),"%s killed you, drink %d", attackName, 1);
-
-		EmitSoundToClient(victim,"vo/burp05.mp3");
-		//Display the window
-		DrawPanelText(myPanel,"[+1]You were killed while DCGing");
-		DrawPanelText(myPanel,"--------------------------------");
-		DrawPanelText(myPanel,"Total: 1");
-		DrawPanelText(myPanel," ");
-		Format(panelBuffer,sizeof(panelBuffer),"Total drinks this round: %d",TotalDrinks[victim]);
-		DrawPanelText(myPanel,panelBuffer);
-		DrawPanelItem(myPanel,"Close");
-		SendPanelToClient(myPanel,victim,MenuHandler1,5);
-		CloseHandle(myPanel);
-		return;
-	}
-
-	//We don't care about the distinction between the two anymore
-	vicDG = (vicDG || vicDCG);
 
 	new bool:tauntKill = (StrContains(weaponName,"taunt",false) != -1);
 
@@ -117,7 +99,6 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 	}
 
 	if (buildingDeath) {
-		TotalDrinks[victim] += 1;
 		BuildingDrinks[victim] += 1;
 		//should this update for dead ringer coward deaths?
 		Update_DG_DB(atDG ? attacker : 0, asDG ? assister : 0, victim, 1, 1, 1, weaponName);
@@ -131,10 +112,10 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 		new drinkCount = 0;
 		new atDrinkCount = 0;
 		new asDrinkCount = 0;
-		new String: reason[150] = "";
+		new String:reason[150] = "";
 
 		if (atDG) {
-		//Add one for attacker drinks caused
+			//Add one for attacker drinks caused
 			atDrinkCount += 1;
 			drinkCount += 1;
 			StrCat(reason,sizeof(reason), "killed by [DG]");
@@ -179,7 +160,7 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 			}
 		}
 
-		//Double for taunt kill if attacker was dg'n
+		//6 for taunt kill if attacker was dg'n
 		if (tauntKill && atDG) {
 			drinkCount += 6;
 			atDrinkCount+=6;
@@ -187,7 +168,7 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 			PushArrayString(drinkText, "[+6]Killed with a taunt kill");
 		}
 
-		//Double for attacker domination
+		//2 for attacker domination
 		if (atDomRev & atDG) {
 			drinkCount += 2;
 			atDrinkCount+=2;
@@ -196,13 +177,25 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 			PushArrayString(drinkText, drinkTextBuffer);
 		}
 
-		//Double for assister domination
+		//2 for assister domination
 		if (asDomRev && asDG) {
 			drinkCount += 2;
 			asDrinkCount+=2;
 			StrCat(reason,sizeof(reason),", [DG] assister dominated/revenged you");
 			Format(drinkTextBuffer, sizeof(drinkTextBuffer), "[+2]You were dominated/revenged by %s",assistName);
 			PushArrayString(drinkText, drinkTextBuffer);
+		}
+
+		if (TF2_GetPlayerClass(victim) == TF2_GetClass("medic")) {
+			new uberWeapon = GetPlayerWeaponSlot(victim, 1);
+			new Float:chargeLevel = GetEntPropFloat(uberWeapon, Prop_Send, "m_flChargeLevel");
+			if (chargeLevel > 0.99) {
+				drinkCount += 1;
+				atDrinkCount += 1;
+				StrCat(reason,sizeof(reason),", you died with full ubercharge");
+				Format(drinkTextBuffer, sizeof(drinkTextBuffer), "[+1]You died with full ubercharge!");
+				PushArrayString(drinkText, drinkTextBuffer);
+			}
 		}
 
 		//Display how many drinks that have to take for their building deaths
@@ -238,6 +231,7 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 		//Suicide
 		if (victim_id == attacker_id) {
 			drinkCount += 2;
+			atDrinkCount = 0;
 			reason =  "killed by yourself";
 			PushArrayString(drinkText, "[+1]You killed yourself");
 		}
@@ -261,6 +255,9 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 		CreateDeathEffect(victim, drinkCount);
 
 		//Give them the victim their drinks
+		TotalDrinks[victim] += drinkCount;
+		GivenDrinks[attacker] += atDrinkCount;
+		GivenDrinks[assister] += asDrinkCount;
 		GiveDrinks(victim, drinkCount, attacker, assister, atDrinkCount, asDrinkCount, weaponName, reason, drinkText);
 	}
 
@@ -303,9 +300,12 @@ stock GiveDrinks(victim, drinkCount, attacker, assister, at_drinks, as_drinks, S
 	PrintCenterText(victim,"%s DRINK %d BITCH",attaunt, drinkCount);
 	PrintToChat(victim,"%sYou were %s drink %d",msgColor, reason, drinkCount);
 
-	PrintToChat(attacker, "%sYou made %s drink %d. Good job!",msgColor, vicName,drinkCount);
 	if (asDG) {
-		PrintToChat(assister,"%sYou made %s drink %d. Good job!",msgColor, vicName,drinkCount);
+		PrintToChat(attacker, "%sYou and %s made %s drink %d. Good job!",msgColor,assistName,vicName,drinkCount);	
+		PrintToChat(assister, "%s%s and You made %s drink %d. Good job!",msgColor,attackName,vicName,drinkCount);	
+	}
+	else {
+		PrintToChat(attacker,"%sYou made %s drink %d. Good job!",msgColor, vicName,drinkCount);
 	}
 	if (GetConVarBool(dgDebug)) {
 		EmitSoundToClient(victim,"vo/burp05.mp3");
@@ -313,7 +313,6 @@ stock GiveDrinks(victim, drinkCount, attacker, assister, at_drinks, as_drinks, S
 	}
 	new Handle:panel = CreatePanel();
 	new String:panelBuffer[100];
-	TotalDrinks[victim] += drinkCount;
 	for (new i=0;i<GetArraySize(menuLines);i++) {
 		new String:line[100];
 		GetArrayString(menuLines, i, line, sizeof(line));
@@ -328,4 +327,10 @@ stock GiveDrinks(victim, drinkCount, attacker, assister, at_drinks, as_drinks, S
 	DrawPanelItem(panel,"Close");
 	SendPanelToClient(panel,victim,MenuHandler1,5);
 	CloseHandle(panel);
+}
+
+public Action:DGDrinkStatus(int client, args) {
+	PrintToChat(client, "You've had %i drinks this round", TotalDrinks[client]);
+	PrintToChat(client, "You've made others drink %i drinks this round", GivenDrinks[client]);
+	return Plugin_Handled;
 }
