@@ -11,3 +11,5 @@ foreach($location in $deployFile.Locations.Location) {
     $uri = $server + $location.Plugins + $plugin.Name
     $webClient.UploadFile($uri, $plugin.FullName)
 }
+
+$webClient.Dispose();
