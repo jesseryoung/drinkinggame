@@ -78,7 +78,16 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 			return;
 		}
 		else {
-			return;
+			//Set the attacker to a player (if you want to continue flow, otherwise this stops)
+			if (GetEventInt(event,"damagebits") & DMG_FALL) {
+				new parachute = GetEntProp(victim, Prop_Send, "m_bParachuteEquipped");
+				if (parachute == 1) {
+					attacker = victim;
+				}
+			}
+			else {
+				return;
+			}
 		}
 	}
 
@@ -245,12 +254,22 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 			return;
 		}
 
-		//Suicide
-		if (victim_id == attacker_id) {
+		//Suicides
+		if (victim == attacker) {
 			drinkCount += 2;
 			atDrinkCount = 0;
 			reason =  "killed by yourself";
 			PushArrayString(drinkText, "[+1]You killed yourself");
+
+			if (GetEventInt(event,"damagebits") & DMG_FALL) {
+				new parachute = GetEntProp(victim, Prop_Send, "m_bParachuteEquipped");
+				if (parachute == 1) {
+					TotalDrinks[victim] += 2;
+					drinkCount += 2;
+					StrCat(reason, sizeof(reason), ", you fell to your death while wearing a parachute");
+					PushArrayString(drinkText, "[+2]Fell to your death while wearing a parachute");
+				}
+			}
 		}
 
 		//Display how many drinks that have to take for their fake deaths
@@ -318,11 +337,15 @@ stock GiveDrinks(victim, drinkCount, attacker, assister, at_drinks, as_drinks, S
 	PrintToChat(victim,"%sYou were %s drink %d",msgColor, reason, drinkCount);
 
 	if (asDG) {
-		PrintToChat(attacker, "%sYou and %s made %s drink %d. Good job!",msgColor,assistName,vicName,drinkCount);	
+		if (victim != attacker) {
+			PrintToChat(attacker, "%sYou and %s made %s drink %d. Good job!",msgColor,assistName,vicName,drinkCount);		
+		}
 		PrintToChat(assister, "%s%s and You made %s drink %d. Good job!",msgColor,attackName,vicName,drinkCount);	
 	}
 	else {
-		PrintToChat(attacker,"%sYou made %s drink %d. Good job!",msgColor, vicName,drinkCount);
+		if (victim != attacker) {
+			PrintToChat(attacker,"%sYou made %s drink %d. Good job!",msgColor, vicName,drinkCount);	
+		}
 	}
 	if (GetConVarBool(dgDebug)) {
 		EmitSoundToClient(victim,"vo/burp05.mp3");
