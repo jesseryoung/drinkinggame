@@ -186,7 +186,7 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 			PushArrayString(drinkText, drinkTextBuffer);
 		}
 
-		if (TF2_GetPlayerClass(victim) == TF2_GetClass("medic")) {
+		if (TF2_GetPlayerClass(victim) == TF2_GetClass("medic") && (atDG || asDG) && attacker != victim) {
 			new uberWeapon = GetPlayerWeaponSlot(victim, 1);
 			new Float:chargeLevel = GetEntPropFloat(uberWeapon, Prop_Send, "m_flChargeLevel");
 			if (chargeLevel > 0.99) {
