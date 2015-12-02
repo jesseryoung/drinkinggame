@@ -78,7 +78,16 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 			return;
 		}
 		else {
-			return;
+			//Set the attacker to a player (if you want to continue flow, otherwise this stops)
+			if (GetEventInt(event,"damagebits") & DMG_FALL) {
+				new parachute = GetEntProp(victim, Prop_Send, "m_bParachuteEquipped");
+				if (parachute == 1) {
+					attacker = victim;
+				}
+			}
+			else {
+				return;
+			}
 		}
 	}
 
@@ -186,7 +195,7 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 			PushArrayString(drinkText, drinkTextBuffer);
 		}
 
-		if (TF2_GetPlayerClass(victim) == TF2_GetClass("medic")) {
+		if (TF2_GetPlayerClass(victim) == TF2_GetClass("medic") && (atDG || asDG) && attacker != victim) {
 			new uberWeapon = GetPlayerWeaponSlot(victim, 1);
 			new Float:chargeLevel = GetEntPropFloat(uberWeapon, Prop_Send, "m_flChargeLevel");
 			if (chargeLevel > 0.99) {
@@ -220,6 +229,23 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 			MedicDrinks[victim] = 0;
 		}
 
+		//Market gardener jousting (both players using market gardener, kill in midair)
+		if (atDG) {
+			if (StrEqual(weaponName,"market_gardener",false)) {
+				new String:victimWeaponClass[128];
+				TF2_GetCurrentWeaponClass(victim, victimWeaponClass,sizeof(victimWeaponClass));
+				if (StrEqual(victimWeaponClass,"tf_weapon_shovel",false)) {
+					//Were both players in the air?
+					if (!(GetEntityFlags(victim) & (FL_ONGROUND)) && !(GetEntityFlags(attacker) & (FL_ONGROUND))) {
+						drinkCount += 6;
+						atDrinkCount += 6;
+						StrCat(reason, sizeof(reason), ", bested mid air with a shovel");
+						PushArrayString(drinkText, "[+6]Bested mid air with a shovel");
+					}
+				}
+			}
+		}
+
 		if (flags & TF_DEATHFLAG_DEADRINGER ) {
 			DeadRingerDrinks[victim] += drinkCount;
 			Format(drinkTextBuffer, sizeof(drinkTextBuffer), "...but you were dead ringing");
@@ -228,12 +254,22 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 			return;
 		}
 
-		//Suicide
-		if (victim_id == attacker_id) {
+		//Suicides
+		if (victim == attacker) {
 			drinkCount += 2;
 			atDrinkCount = 0;
 			reason =  "killed by yourself";
 			PushArrayString(drinkText, "[+1]You killed yourself");
+
+			if (GetEventInt(event,"damagebits") & DMG_FALL) {
+				new parachute = GetEntProp(victim, Prop_Send, "m_bParachuteEquipped");
+				if (parachute == 1) {
+					TotalDrinks[victim] += 2;
+					drinkCount += 2;
+					StrCat(reason, sizeof(reason), ", you fell to your death while wearing a parachute");
+					PushArrayString(drinkText, "[+2]Fell to your death while wearing a parachute");
+				}
+			}
 		}
 
 		//Display how many drinks that have to take for their fake deaths
@@ -301,11 +337,15 @@ stock GiveDrinks(victim, drinkCount, attacker, assister, at_drinks, as_drinks, S
 	PrintToChat(victim,"%sYou were %s drink %d",msgColor, reason, drinkCount);
 
 	if (asDG) {
-		PrintToChat(attacker, "%sYou and %s made %s drink %d. Good job!",msgColor,assistName,vicName,drinkCount);	
+		if (victim != attacker) {
+			PrintToChat(attacker, "%sYou and %s made %s drink %d. Good job!",msgColor,assistName,vicName,drinkCount);		
+		}
 		PrintToChat(assister, "%s%s and You made %s drink %d. Good job!",msgColor,attackName,vicName,drinkCount);	
 	}
 	else {
-		PrintToChat(attacker,"%sYou made %s drink %d. Good job!",msgColor, vicName,drinkCount);
+		if (victim != attacker) {
+			PrintToChat(attacker,"%sYou made %s drink %d. Good job!",msgColor, vicName,drinkCount);	
+		}
 	}
 	if (GetConVarBool(dgDebug)) {
 		EmitSoundToClient(victim,"vo/burp05.mp3");
@@ -330,7 +370,7 @@ stock GiveDrinks(victim, drinkCount, attacker, assister, at_drinks, as_drinks, S
 }
 
 public Action:DGDrinkStatus(int client, args) {
-	PrintToChat(client, "You've had %i drinks this round", TotalDrinks[client]);
-	PrintToChat(client, "You've made others drink %i drinks this round", GivenDrinks[client]);
+	PrintToChat(client, "%sYou've had %i drinks this round",msgColor, TotalDrinks[client]);
+	PrintToChat(client, "%sYou've made others drink %i drinks this round",msgColor, GivenDrinks[client]);
 	return Plugin_Handled;
 }
