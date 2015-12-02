@@ -231,17 +231,15 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 
 		//Market gardener jousting (both players using market gardener, kill in midair)
 		if (atDG) {
-			if (StrEqual(weaponName,"market_gardener",false)) {
-				new String:victimWeaponClass[128];
-				TF2_GetCurrentWeaponClass(victim, victimWeaponClass,sizeof(victimWeaponClass));
-				if (StrEqual(victimWeaponClass,"tf_weapon_shovel",false)) {
-					//Were both players in the air?
-					if (!(GetEntityFlags(victim) & (FL_ONGROUND)) && !(GetEntityFlags(attacker) & (FL_ONGROUND))) {
-						drinkCount += 6;
-						atDrinkCount += 6;
-						StrCat(reason, sizeof(reason), ", bested mid air with a shovel");
-						PushArrayString(drinkText, "[+6]Bested mid air with a shovel");
-					}
+			new attackerWeaponIndex = TF2_GetCurrentWeapon(attacker);
+			new victimWeaponIndex = TF2_GetCurrentWeapon(victim);
+			if (attackerWeaponIndex == 416 && victimWeaponIndex == 416) { //market gardener weapon index is 416
+				//Were both players in the air?
+				if (!(GetEntityFlags(victim) & (FL_ONGROUND)) && !(GetEntityFlags(attacker) & (FL_ONGROUND))) {
+					drinkCount += 4;
+					atDrinkCount += 4;
+					StrCat(reason, sizeof(reason), ", bested mid air with a shovel");
+					PushArrayString(drinkText, "[+4]Bested mid air with a shovel");
 				}
 			}
 		}
@@ -266,8 +264,8 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 				if (parachute == 1) {
 					TotalDrinks[victim] += 2;
 					drinkCount += 2;
-					StrCat(reason, sizeof(reason), ", you fell to your death while wearing a parachute");
-					PushArrayString(drinkText, "[+2]Fell to your death while wearing a parachute");
+					StrCat(reason, sizeof(reason), ", you fell to your death wearing a parachute");
+					PushArrayString(drinkText, "[+2]Fell to your death wearing a parachute");
 				}
 			}
 		}
