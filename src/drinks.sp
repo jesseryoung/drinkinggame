@@ -231,8 +231,10 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 
 		//Market gardener jousting (both players using market gardener, kill in midair)
 		if (atDG) {
-			new attackerWeaponIndex = TF2_GetCurrentWeapon(attacker);
-			new victimWeaponIndex = TF2_GetCurrentWeapon(victim);
+			new attackerWeapon = TF2_GetCurrentWeapon(attacker);
+			new victimWeapon = TF2_GetCurrentWeapon(victim);
+			new attackerWeaponIndex = GetEntProp(attackerWeapon, Prop_Send, "m_iItemDefinitionIndex");
+			new victimWeaponIndex = GetEntProp(victimWeapon, Prop_Send, "m_iItemDefinitionIndex");
 			if (attackerWeaponIndex == 416 && victimWeaponIndex == 416) { //market gardener weapon index is 416
 				//Were both players in the air?
 				if (!(GetEntityFlags(victim) & (FL_ONGROUND)) && !(GetEntityFlags(attacker) & (FL_ONGROUND))) {
