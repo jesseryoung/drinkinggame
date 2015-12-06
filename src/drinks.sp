@@ -17,6 +17,8 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 	new attacker = GetClientOfUserId(attacker_id);
 	new assister = GetClientOfUserId(assister_id);
 
+	new customkill = GetEventInt(event, "customkill");
+
 	if (victim == 0) {
 		return;
 	}
@@ -242,6 +244,28 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 					atDrinkCount += 4;
 					StrCat(reason, sizeof(reason), ", bested mid air with a shovel");
 					PushArrayString(drinkText, "[+4]Bested mid air with a shovel");
+				}
+			}
+		}
+
+		//Huntsman shooting rocket jumpers out of the air
+		if (atDG) {
+			if (!(GetEntityFlags(victim) & FL_ONGROUND) && StrEqual(weaponName,"tf_projectile_arrow",false)) {
+				new victimWeapon = GetPlayerWeaponSlot(victim, 0);
+				new victimWeaponIndex = GetEntProp(victimWeapon, Prop_Send, "m_iItemDefinitionIndex");
+				if (victimWeaponIndex == 237) { //Rocket jumper weapon index
+					if (customkill == TF_CUSTOM_HEADSHOT) {
+						drinkCount += 2;
+						atDrinkCount += 2;
+						StrCat(reason, sizeof(reason), ", shot out of the air");
+						PushArrayString(drinkText, "[+2]Shot out of the air");
+					}
+					else {
+						drinkCount += 4;
+						atDrinkCount += 4;
+						StrCat(reason, sizeof(reason), ", headshot out of the air");
+						PushArrayString(drinkText, "[+4]Headshot out of the air");
+					}
 				}
 			}
 		}
