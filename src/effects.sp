@@ -55,6 +55,7 @@ stock SpawnBottleAtClient(client, Float:avel[3]) {
 	DispatchKeyValue(ent,"physicsmode","3");
 	DispatchKeyValue(ent,"spawnflags","4");
 	DispatchKeyValue(ent,"model","models/props_gameplay/bottle001.mdl");
+	DispatchKeyValueFloat(ent,"modelscale",GetRandomFloat(0.75,1.25));
 	DispatchSpawn(ent);
 	TeleportEntity(ent, pos, ang, vel);
 	SetEntityMoveType(ent, MOVETYPE_VPHYSICS);
