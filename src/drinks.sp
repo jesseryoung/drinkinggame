@@ -19,6 +19,12 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 
 	new customkill = GetEventInt(event, "customkill");
 
+	new Float:atPos[3];
+	new Float:vicPos[3];
+	GetEntPropVector(attacker, Prop_Data, "m_vecOrigin", atPos);
+	GetEntPropVector(victim, Prop_Data, "m_vecOrigin", vicPos);
+	new Float:attackerDistance = GetVectorDistance(atPos, vicPos);
+
 	if (victim == 0) {
 		return;
 	}
@@ -243,7 +249,14 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 					drinkCount += 4;
 					atDrinkCount += 4;
 					StrCat(reason, sizeof(reason), ", bested mid air with a shovel");
-					PushArrayString(drinkText, "[+4]Bested mid air with a shovel");
+					if (GetEntProp(attacker, Prop_Send, "m_bParachuteEquipped")) {
+						//One less drink if the attacker is parachuting
+						drinkCount -= 1;
+						atDrinkCount -= 1;
+						PushArrayString(drinkText, "[+3]Bested mid air with a shovel");
+					} else {
+						PushArrayString(drinkText, "[+4]Bested mid air with a shovel");	
+					}
 				}
 			}
 		}
@@ -254,23 +267,31 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 				new victimWeapon = GetPlayerWeaponSlot(victim, 0);
 				new victimWeaponIndex = GetEntProp(victimWeapon, Prop_Send, "m_iItemDefinitionIndex");
 				if (victimWeaponIndex == 237) { //Rocket jumper weapon index
+
 					new drinks = 0;
 					if (StrEqual(weaponName,"deflect_arrow",false)) {
-						drinks = 4;
+						drinks += 4;
+					}
+					new feetDistance = RoundToFloor(attackerDistance / 32); //Source engine units are generally 16units = 1ft, but measurements are also comically oversized.
+					if (attackerDistance <= 400) {
+						drinks += 2;
+					}
+					else if (attackerDistance > 800) {
+						drinks += RoundToFloor(attackerDistance / 400);
 					}
 					new String:msg[150];
 					if (customkill != TF_CUSTOM_HEADSHOT) {
-						drinks += 2;
+						drinks += 1;
 						drinkCount += drinks;
 						atDrinkCount += drinks;
-						Format(msg, sizeof(msg), "[+%i]Shot out of the air", drinks);
+						Format(msg, sizeof(msg), "[+%i]Shot out of the air from %i feet", drinks, feetDistance);
 						StrCat(reason, sizeof(reason), " , shot out of the air");
 						PushArrayString(drinkText, msg);
 					} else {
-						drinks += 4;
+						drinks += 3;
 						drinkCount += drinks;
 						atDrinkCount += drinks;
-						Format(msg, sizeof(msg), "[+%i]Shot out of the air", drinks);
+						Format(msg, sizeof(msg), "[+%i]Headshot out of the air from %i feet", drinks, feetDistance);
 						StrCat(reason, sizeof(reason), " , headshot out of the air");
 						PushArrayString(drinkText, msg);
 					}	
