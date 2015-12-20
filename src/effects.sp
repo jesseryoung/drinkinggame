@@ -53,7 +53,7 @@ stock SpawnBottleAtClient(client, Float:avel[3]) {
 	new String:modelName[100];
 	modelName = "models/props_gameplay/bottle001.mdl";
 	if (GetConVarBool(dgHolidayMode)) {
-		new rand = GetRandomInt(0,5);
+		new rand = GetRandomInt(0,6);
 		if (rand == 1) {
 			modelName = "models/player/items/all_class/oh_xmas_tree_soldier.mdl";
 		}
