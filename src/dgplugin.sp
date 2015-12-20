@@ -48,6 +48,7 @@ new Handle:g_hStatsURL;
 new Handle:g_hRulesURL;
 new Handle:dgBottleDeath;
 new Handle:dgUnfairBalance;
+new Handle:dgHolidayMode;
 new Handle:dgDebug;
 
 #include "helpers.sp"
@@ -82,6 +83,7 @@ public OnPluginStart()
 	RegConsoleCmd("dg_info",DGInfo);
 	RegConsoleCmd("dg_stats",DGStats);
 	RegConsoleCmd("dg_mystatus",DGDrinkStatus);
+	RegConsoleCmd("dg_mystats",DGDrinkStatus);
 	RegAdminCmd("dg_random", DGRandomDG, ADMFLAG_GENERIC);
 	RegAdminCmd("dg_add_bots", DGAddBots, ADMFLAG_GENERIC);
 	RegAdminCmd("dg_balance", DGBalance, ADMFLAG_GENERIC);
@@ -91,6 +93,7 @@ public OnPluginStart()
 	g_hRulesURL = CreateConVar("dg_rulesurl", "http://www.team-brh.com/forums/viewtopic.php?f=8&t=7666", "Web location where rules are posted for when a player types dg_info in chat");
 	dgBottleDeath = CreateConVar("dg_bottledeath", "1", "Spawn bottles based on how many drinks were given on death");
 	dgUnfairBalance = CreateConVar("dg_unfairbalance", "1", "Prevent certain heavy medic pairs from being dg-balanced separated");
+	dgHolidayMode = CreateConVar("dg_holidaymode", "0", "Drink irresponsibly this holiday season.");
 	dgDebug = CreateConVar("dg_debug", "0", "Drinking Game Debug Mode");
 	//For findtarget
 	LoadTranslations("common.phrases");
@@ -99,6 +102,11 @@ public OnPluginStart()
 	LoadWepMults(0,0);
 
 	gVelocityOffset = FindSendPropInfo("CBasePlayer", "m_vecVelocity[0]");
+
+	//Turn on holiday mode if month is december
+	new String:date[30];
+	FormatTime(date, sizeof(date), "%b");
+	SetConVarBool(dgHolidayMode, StrEqual(date, "Dec"));
 }
 public OnPluginEnd() {
 	//Kill all sprites on end

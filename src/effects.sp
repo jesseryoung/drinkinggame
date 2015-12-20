@@ -13,6 +13,10 @@ public Action:SpawnDeathEffect(Handle:timer, Handle:data) {
 	new client = ReadPackCell(data);
 	new amount = ReadPackCell(data);
 	if (amount < 0) amount = 0;
+
+	if (GetConVarBool(dgHolidayMode)) {
+		amount = amount * 2;
+	}
 	for (new i = 0; i < amount; i++) {
 		//Create the random angle/velocities of each bottle, based on adding to players velocity
 		new Float:vel[3];
@@ -26,6 +30,9 @@ public Action:SpawnDeathEffect(Handle:timer, Handle:data) {
 }
 
 stock SpawnBottleAtClient(client, Float:avel[3]) {
+	if (GetEntityCount() + 5 > GetMaxEntities()) {
+		return; //Prevent crashing server by creating too many entities
+	}
 	new ent = CreateEntityByName("prop_physics_override");
 	//Create the random angle/velocities of each bottle, based on adding to players velocity
 	new Float:cvel[3];
@@ -43,6 +50,21 @@ stock SpawnBottleAtClient(client, Float:avel[3]) {
 	ang[1] = GetRandomFloat(0.0, 359.0);
 	ang[2] = GetRandomFloat(0.0, 359.0);
 
+	new String:modelName[100];
+	modelName = "models/props_gameplay/bottle001.mdl";
+	if (GetConVarBool(dgHolidayMode)) {
+		new rand = GetRandomInt(0,5);
+		if (rand == 1) {
+			modelName = "models/player/items/all_class/oh_xmas_tree_soldier.mdl";
+		}
+		else if (rand == 2) {
+			modelName = "models/weapons/c_models/c_candy_cane/c_candy_cane.mdl";
+		}
+		else if (rand == 3) {
+			modelName = "models/player/items/engineer/engineer_colored_lights.mdl";
+		}
+	}
+
 	DispatchKeyValue(ent,"damagetoenablemotion","0");
 	DispatchKeyValue(ent,"forcetoenablemotion","0");
 	DispatchKeyValue(ent,"Damagetype","0");
@@ -54,8 +76,8 @@ stock SpawnBottleAtClient(client, Float:avel[3]) {
 	DispatchKeyValue(ent,"disableshadows","1");
 	DispatchKeyValue(ent,"physicsmode","3");
 	DispatchKeyValue(ent,"spawnflags","4");
-	DispatchKeyValue(ent,"model","models/props_gameplay/bottle001.mdl");
-	DispatchKeyValueFloat(ent,"modelscale",GetRandomFloat(0.75,1.25));
+	DispatchKeyValue(ent,"model", modelName);
+	DispatchKeyValueFloat(ent,"modelscale",GetRandomFloat(0.8,1.2));
 	DispatchSpawn(ent);
 	TeleportEntity(ent, pos, ang, vel);
 	SetEntityMoveType(ent, MOVETYPE_VPHYSICS);
