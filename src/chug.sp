@@ -23,17 +23,27 @@ public Action:DGChugRound(int client1, int args) {
 			EmitSoundToClient(i,"vo/burp05.mp3");
 			PrintCenterText(i,str);
 			if (IsPlayerAlive(i)) {
-			 	new Float:vel[3];
-				new Float:ang[3];
-				GetClientEyeAngles(i, ang);
-				GetAngleVectors(ang, vel, NULL_VECTOR, NULL_VECTOR);
-				ScaleVector(vel, 300.0);
-				SpawnBottleAtClient(i, vel);
+				new rand = GetRandomInt(6,8);
+				for (new k=0;k<rand;k++) {
+					CreateTimer(0.2 * k, ChugRoundBottles, i);
+				}
 			}
 		}
 	}
 	CreateTimer(6.0, ResetChugRound);
 	return Plugin_Handled;
+}
+
+public Action ChugRoundBottles(Handle:timer, any:client) {
+	new Float:vel[3];
+	new Float:ang[3];
+	GetClientEyeAngles(client, ang);
+	GetAngleVectors(ang, vel, NULL_VECTOR, NULL_VECTOR);
+	ScaleVector(vel, GetRandomFloat(150.0, 300.0));
+	for (new l=0;l<3;l++) {
+		vel[l] += GetRandomFloat(-20.0,20.0);
+	}
+	SpawnBottleAtClient(client, vel);
 }
 
 public Action ResetChugRound(Handle:timer) {
