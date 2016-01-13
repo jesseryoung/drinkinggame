@@ -760,7 +760,7 @@ public GetTopDrinkers(String:buffer[], size, listmax) {
 	//rtn is only going to be as big as the number of players
 	new String:rtn[(MAXPLAYERS + 1)*(sizeof(name)+4)]
 	new printed = 0;
-	for (new i = 0; i <= MaxClients; i++) {
+	for (new i = 0; i < MaxClients; i++) {
 		if (printed >= listmax) {
 			continue;
 		}
