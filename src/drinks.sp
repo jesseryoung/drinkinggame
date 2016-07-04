@@ -4,7 +4,8 @@ new DeadRingerDrinks[MAXPLAYERS + 1];
 new MedicDrinks[MAXPLAYERS + 1];
 new GivenDrinks[MAXPLAYERS + 1];
 
-stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
+
+stock DG_Drinks_GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 	new bool:buildingDeath = StrEqual(name,"object_destroyed",false);
 
 	//Get user ids of people that the event happend to
@@ -33,7 +34,7 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 	if (!buildingDeath) {
 		flags = GetEventInt(event,"death_flags")
 		//Only kill the sprite if its a player death
-		KillSprite(victim);
+		DG_Effects_KillSprite(victim);
 	}
 
 	//Get weapon that caused death
@@ -51,9 +52,9 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 	GetClientName(assister, assistName,sizeof(assistName))
 
 	//See whos playin DG
-	new bool:vicDG  = willDrink(vicName);
-	new bool:atDG   = causesDrinks(attackName);
-	new bool:asDG   = causesDrinks(assistName);
+	new bool:vicDG  = DG_IsPlayerPlaying(vicName);
+	new bool:atDG   = DG_IsPlayerPlaying(attackName);
+	new bool:asDG   = DG_IsPlayerPlaying(assistName);
 
 	//Exit if vic isnt DGin
 	if (!vicDG) {
@@ -70,7 +71,7 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 			PrintToChat(victim,"%sDon't get disTRACKted, drink 6",msgColor);	
 			EmitSoundToClient(victim,"vo/burp05.mp3");
 
-			Update_DG_DB(victim,0,victim,6,0,6,"train");
+			DG_Database_AddDrinks(victim,0,victim,6,0,6,"train");
 
 			new Handle:myPanel = CreatePanel();
 			new String:panelBuffer[100];
@@ -110,7 +111,7 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 		new patient = GetClientOfUserId(healingTarget);
 		new String:patientName[100];
 		GetClientName(patient, patientName,sizeof(patientName))
-		if (causesDrinks(patientName) && atDG) {
+		if (DG_IsPlayerPlaying(patientName) && atDG) {
 			MedicDrinks[patient] += 1;
 		}
 	}
@@ -118,7 +119,7 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 	if (buildingDeath) {
 		BuildingDrinks[victim] += 1;
 		//should this update for dead ringer coward deaths?
-		Update_DG_DB(atDG ? attacker : 0, asDG ? assister : 0, victim, 1, 1, 1, weaponName);
+		DG_Database_AddDrinks(atDG ? attacker : 0, asDG ? assister : 0, victim, 1, 1, 1, weaponName);
 
 		PrintToChat(attacker, "%sYou made %s drink %d. Good job!",msgColor, vicName, 1 );
 		if (asDG) {
@@ -341,13 +342,13 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 		}
 
 		//Create the death effect based on # of drinks
-		CreateDeathEffect(victim, drinkCount);
+		DG_Effects_CreateDeathEffect(victim, drinkCount);
 
 		//Give them the victim their drinks
 		TotalDrinks[victim] += drinkCount;
 		GivenDrinks[attacker] += atDrinkCount;
 		GivenDrinks[assister] += asDrinkCount;
-		GiveDrinks(victim, drinkCount, attacker, assister, atDrinkCount, asDrinkCount, weaponName, reason, drinkText);
+		DG_Drinks_GiveDrinks(victim, drinkCount, attacker, assister, atDrinkCount, asDrinkCount, weaponName, reason, drinkText);
 	}
 
 
@@ -362,7 +363,7 @@ stock GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 	}
 }
 
-stock GiveDrinks(victim, drinkCount, attacker, assister, at_drinks, as_drinks, String:weaponName[], String:reason[], Handle:menuLines) {
+stock DG_Drinks_GiveDrinks(victim, drinkCount, attacker, assister, at_drinks, as_drinks, String:weaponName[], String:reason[], Handle:menuLines) {
 	if (drinkCount <= 0) {
 		return;
 	}
@@ -376,15 +377,15 @@ stock GiveDrinks(victim, drinkCount, attacker, assister, at_drinks, as_drinks, S
 	GetClientName(assister, assistName,sizeof(assistName));
 
 	//See whos playin DG
-	new bool:atDG   = causesDrinks(attackName);
-	new bool:asDG   = causesDrinks(assistName);
+	new bool:atDG   = DG_IsPlayerPlaying(attackName);
+	new bool:asDG   = DG_IsPlayerPlaying(assistName);
 	//Print out all this info to the victim
 
 	//Now the taunt for that player
 	new String: steamID[32];
 	GetClientAuthId(attacker,AuthId_Steam2,steamID,sizeof(steamID));
 	new String:attaunt[100];
-	GetTaunt(steamID,attaunt,sizeof(attaunt),false);
+	DG_Taunts_GetTaunt(steamID,attaunt,sizeof(attaunt),false);
 
 	PrintCenterText(victim,"%s DRINK %d BITCH",attaunt, drinkCount);
 	PrintToChat(victim,"%sYou were %s drink %d",msgColor, reason, drinkCount);
@@ -402,7 +403,7 @@ stock GiveDrinks(victim, drinkCount, attacker, assister, at_drinks, as_drinks, S
 	}
 	if (GetConVarBool(dgDebug)) {
 		EmitSoundToClient(victim,"vo/burp05.mp3");
-		Update_DG_DB(atDG ? attacker : 0, asDG ? assister : 0, victim, at_drinks, as_drinks, drinkCount, weaponName);
+		DG_Database_AddDrinks(atDG ? attacker : 0, asDG ? assister : 0, victim, at_drinks, as_drinks, drinkCount, weaponName);
 	}
 	new Handle:panel = CreatePanel();
 	new String:panelBuffer[100];
@@ -422,7 +423,7 @@ stock GiveDrinks(victim, drinkCount, attacker, assister, at_drinks, as_drinks, S
 	CloseHandle(panel);
 }
 
-public Action:DGDrinkStatus(int client, args) {
+public Action:DG_Drinks_MyStats(int client, args) {
 	PrintToChat(client, "%sYou've had %i drinks this round",msgColor, TotalDrinks[client]);
 	PrintToChat(client, "%sYou've made others drink %i drinks this round",msgColor, GivenDrinks[client]);
 	return Plugin_Handled;
