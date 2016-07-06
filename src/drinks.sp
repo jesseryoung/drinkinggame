@@ -242,21 +242,23 @@ stock DG_Drinks_GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 		if (atDG) {
 			new attackerWeapon = TF2_GetCurrentWeapon(attacker);
 			new victimWeapon = TF2_GetCurrentWeapon(victim);
-			new attackerWeaponIndex = GetEntProp(attackerWeapon, Prop_Send, "m_iItemDefinitionIndex");
-			new victimWeaponIndex = GetEntProp(victimWeapon, Prop_Send, "m_iItemDefinitionIndex");
-			if (attackerWeaponIndex == 416 && victimWeaponIndex == 416) { //market gardener weapon index is 416
-				//Were both players in the air?
-				if (!(GetEntityFlags(victim) & (FL_ONGROUND)) && !(GetEntityFlags(attacker) & (FL_ONGROUND))) {
-					drinkCount += 4;
-					atDrinkCount += 4;
-					StrCat(reason, sizeof(reason), ", bested mid air with a shovel");
-					if (GetEntProp(attacker, Prop_Send, "m_bParachuteEquipped")) {
-						//One less drink if the attacker is parachuting
-						drinkCount -= 1;
-						atDrinkCount -= 1;
-						PushArrayString(drinkText, "[+3]Bested mid air with a shovel");
-					} else {
-						PushArrayString(drinkText, "[+4]Bested mid air with a shovel");	
+			if (attackerWeapon && victimWeapon) {
+				new attackerWeaponIndex = GetEntProp(attackerWeapon, Prop_Send, "m_iItemDefinitionIndex");
+				new victimWeaponIndex = GetEntProp(victimWeapon, Prop_Send, "m_iItemDefinitionIndex");
+				if (attackerWeaponIndex == 416 && victimWeaponIndex == 416) { //market gardener weapon index is 416
+					//Were both players in the air?
+					if (!(GetEntityFlags(victim) & (FL_ONGROUND)) && !(GetEntityFlags(attacker) & (FL_ONGROUND))) {
+						drinkCount += 4;
+						atDrinkCount += 4;
+						StrCat(reason, sizeof(reason), ", bested mid air with a shovel");
+						if (GetEntProp(attacker, Prop_Send, "m_bParachuteEquipped")) {
+							//One less drink if the attacker is parachuting
+							drinkCount -= 1;
+							atDrinkCount -= 1;
+							PushArrayString(drinkText, "[+3]Bested mid air with a shovel");
+						} else {
+							PushArrayString(drinkText, "[+4]Bested mid air with a shovel");	
+						}
 					}
 				}
 			}
