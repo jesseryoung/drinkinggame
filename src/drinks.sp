@@ -274,11 +274,11 @@ stock DG_Drinks_GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 						drinks += 4;
 					}
 					new feetDistance = RoundToFloor(attackerDistance / 32); //Source engine units are generally 16units = 1ft, but measurements are also comically oversized.
-					if (attackerDistance <= 400) {
-						drinks += 2;
+					if (attackerDistance <= 300) {
+						drinks += 1;
 					}
-					else if (attackerDistance > 800) {
-						drinks += RoundToFloor(attackerDistance / 400);
+					else if (attackerDistance > 300) {
+						drinks += RoundToFloor(attackerDistance / 300);
 					}
 					new String:msg[150];
 					if (customkill != TF_CUSTOM_HEADSHOT) {
