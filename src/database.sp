@@ -40,6 +40,13 @@ public DG_Database_LoadWeaponInfo() {
 	}
 }
 
+public T_SQLThreadReturn(Handle:owner, Handle:hndl, const String:error[], any:data) {
+	if (hndl == INVALID_HANDLE)
+	{
+		LogError(error)
+	}
+}
+
 public DG_Database_AddDrinks(attacker, assister, victim, at_drinks, as_drinks, vic_drinks, String: weapon[]) {
 	//Return if the db is closed
 	if (db == INVALID_HANDLE || GetConVarBool(dgDebug)) {

@@ -544,14 +544,6 @@ public DG_SortByTotalDrinkCount(elem1, elem2, const array[],Handle:hndl) {
 	}
 }
 
-
-public T_SQLThreadReturn(Handle:owner, Handle:hndl, const String:error[], any:data) {
-	if (hndl == INVALID_HANDLE)
-	{
-		LogError(error)
-	}
-}
-
 public ShowDGStats(client, String:plrname[]) {
 	new String:statsUrl[300];
 	GetConVarString(dgStatsURL,statsUrl,sizeof(statsUrl));
