@@ -1,14 +1,14 @@
 
-stock CreateDeathEffect(ent, val) {
+stock DG_Effects_CreateDeathEffect(ent, val) {
 	if (GetConVarBool(dgBottleDeath)) {
 		new Handle:datapack;
-		CreateDataTimer(0.1, SpawnDeathEffect, datapack);
+		CreateDataTimer(0.1, DG_Effects_SpawnDeathEffect, datapack);
 		WritePackCell(datapack, ent);
 		WritePackCell(datapack, val);
 	}
 }
 
-public Action:SpawnDeathEffect(Handle:timer, Handle:data) {
+public Action:DG_Effects_SpawnDeathEffect(Handle:timer, Handle:data) {
 	ResetPack(data);
 	new client = ReadPackCell(data);
 	new amount = ReadPackCell(data);
@@ -25,11 +25,11 @@ public Action:SpawnDeathEffect(Handle:timer, Handle:data) {
 		vel[0] += GetRandomFloat(-150.0, 150.0);
 		vel[1] += GetRandomFloat(-150.0, 150.0);
 		vel[2] += GetRandomFloat(-30.0, 90.0);
-		SpawnBottleAtClient(client, vel);
+		DG_Effects_SpawnBottleAtClient(client, vel);
 	}
 }
 
-stock SpawnBottleAtClient(client, Float:avel[3]) {
+stock DG_Effects_SpawnBottleAtClient(client, Float:avel[3]) {
 	if (GetEntityCount() + 5 > GetMaxEntities()) {
 		return; //Prevent crashing server by creating too many entities
 	}
@@ -81,10 +81,10 @@ stock SpawnBottleAtClient(client, Float:avel[3]) {
 	DispatchSpawn(ent);
 	TeleportEntity(ent, pos, ang, vel);
 	SetEntityMoveType(ent, MOVETYPE_VPHYSICS);
-	CreateTimer(12.0, DestroyDeathEffect, ent);
+	CreateTimer(12.0, DG_Effects_DestroyDeathEffect, ent);
 }
 
-public Action:DestroyDeathEffect(Handle:timer, any:ent) {
+public Action:DG_Effects_DestroyDeathEffect(Handle:timer, any:ent) {
 	if (IsValidEntity(ent)) {
 		//Make sure this is the entity we're expecting
 		new String:classname[256];
@@ -95,11 +95,11 @@ public Action:DestroyDeathEffect(Handle:timer, any:ent) {
 	}
 }
 
-stock CreateSprite(iClient, String:sprite[])
+stock DG_Effects_CreateSprite(iClient, String:sprite[])
 {
 	//Clean up any existing sprites and their parents:
-	if (g_EntList[iClient] > 0 || g_EntParentList[iClient] > 0) {
-		KillSprite(iClient);
+	if (dgSprites[iClient] > 0 || dgSpritesParents[iClient] > 0) {
+		DG_Effects_KillSprite(iClient);
 	}
 
 	//new String:strClient[64];
@@ -136,7 +136,7 @@ stock CreateSprite(iClient, String:sprite[])
 	//SetVariantString(strClient);
 	//AcceptEntityInput(parent, "SetParent",parent, parent, 0);
 
-	g_EntParentList[iClient] = parent;
+	dgSpritesParents[iClient] = parent;
 
 	new ent = CreateEntityByName("env_sprite_oriented");
 
@@ -155,7 +155,7 @@ stock CreateSprite(iClient, String:sprite[])
 
 		DispatchSpawn(ent);
 		//TeleportEntity(ent, vOrigin, NULL_VECTOR, NULL_VECTOR);
-		g_EntList[iClient] = ent;
+		dgSprites[iClient] = ent;
 
 		SetVariantString(strParent);
 		AcceptEntityInput(ent, "SetParent");
@@ -164,17 +164,24 @@ stock CreateSprite(iClient, String:sprite[])
 	}
 }
 
-stock KillSprite(iClient)
+stock DG_Effects_KillSprite(iClient)
 {
-	if (g_EntList[iClient] > 0 && IsValidEntity(g_EntList[iClient]))
+	if (dgSprites[iClient] > 0 && IsValidEntity(dgSprites[iClient]))
 	{
-		AcceptEntityInput(g_EntList[iClient], "kill");
-		g_EntList[iClient] = 0;
+		AcceptEntityInput(dgSprites[iClient], "kill");
+		dgSprites[iClient] = 0;
 	}
 
-	if (g_EntParentList[iClient] > 0 && IsValidEntity(g_EntParentList[iClient]))
+	if (dgSpritesParents[iClient] > 0 && IsValidEntity(dgSpritesParents[iClient]))
 	{
-		AcceptEntityInput(g_EntParentList[iClient], "kill");
-		g_EntParentList[iClient] = 0;
+		AcceptEntityInput(dgSpritesParents[iClient], "kill");
+		dgSpritesParents[iClient] = 0;
+	}
+}
+
+public DG_Effects_KillAllSprites() {
+	for(new i = 1; i <= MaxClients; i++)
+	{
+		DG_Effects_KillSprite(i);
 	}
 }

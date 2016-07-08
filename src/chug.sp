@@ -1,6 +1,6 @@
 new bool:canChugRound = true;
 
-public Action:DGChugRound(int client1, int args) {
+public Action:DG_Chug_ChugRoundCommand(int client1, int args) {
 	new String:str[256];
 	GetCmdArgString(str, sizeof(str));
 
@@ -19,22 +19,22 @@ public Action:DGChugRound(int client1, int args) {
 		}
 		new String:playerName[64];
 		GetClientName(i, playerName,sizeof(playerName));
-		if (willDrink(playerName)) {
+		if (DG_IsPlayerPlaying(playerName)) {
 			EmitSoundToClient(i,"vo/burp05.mp3");
 			PrintCenterText(i,str);
 			if (IsPlayerAlive(i)) {
 				new rand = GetRandomInt(6,8);
 				for (new k=0;k<rand;k++) {
-					CreateTimer(0.2 * k, ChugRoundBottles, i);
+					CreateTimer(0.2 * k, DG_Chug_ChugRoundBottles, i);
 				}
 			}
 		}
 	}
-	CreateTimer(6.0, ResetChugRound);
+	CreateTimer(6.0, DG_Chug_ResetChugRound);
 	return Plugin_Handled;
 }
 
-public Action ChugRoundBottles(Handle:timer, any:client) {
+public Action DG_Chug_ChugRoundBottles(Handle:timer, any:client) {
 	new Float:vel[3];
 	new Float:ang[3];
 	GetClientEyeAngles(client, ang);
@@ -43,9 +43,9 @@ public Action ChugRoundBottles(Handle:timer, any:client) {
 	for (new l=0;l<3;l++) {
 		vel[l] += GetRandomFloat(-20.0,20.0);
 	}
-	SpawnBottleAtClient(client, vel);
+	DG_Effects_SpawnBottleAtClient(client, vel);
 }
 
-public Action ResetChugRound(Handle:timer) {
+public Action DG_Chug_ResetChugRound(Handle:timer) {
 	canChugRound = true;
 }

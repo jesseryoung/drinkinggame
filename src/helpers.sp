@@ -12,3 +12,11 @@ stock getTeamName(id, String:buffer[], maxlength) {
 		strcopy(buffer, maxlength, blu);
 	}
 }
+
+public StringToUpper(String:str[]) {
+	new i = 0;
+	while (str[i] != '\0') {
+		str[i] = CharToUpper(str[i]);
+		i++;
+	}
+}
