@@ -242,7 +242,7 @@ stock DG_Drinks_GivePlayerDeathDrinks(Handle:event, const String:name[]) {
 		if (atDG) {
 			new attackerWeapon = TF2_GetCurrentWeapon(attacker);
 			new victimWeapon = TF2_GetCurrentWeapon(victim);
-			if (attackerWeapon && victimWeapon) {
+			if (attackerWeapon != -1 && victimWeapon != -1) {
 				new attackerWeaponIndex = GetEntProp(attackerWeapon, Prop_Send, "m_iItemDefinitionIndex");
 				new victimWeaponIndex = GetEntProp(victimWeapon, Prop_Send, "m_iItemDefinitionIndex");
 				if (attackerWeaponIndex == 416 && victimWeaponIndex == 416) { //market gardener weapon index is 416
