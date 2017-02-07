@@ -44,7 +44,7 @@ public OnPluginStart()
 	RegConsoleCmd("dg_info",DG_InfoCommand);
 	RegConsoleCmd("dg_stats",DG_StatsCommand);
 	RegConsoleCmd("dg_mystats",DG_Drinks_MyStats);
-	RegAdminCmd("dg_add_bots", DG_AddBotsCommand, ADMFLAG_GENERIC);
+	RegAdminCmd("dg_add_bot", DG_AddBotCommand, ADMFLAG_GENERIC);
 	RegAdminCmd("dg_balance", DG_Balance_CallBalanceCommand, ADMFLAG_GENERIC);
 	RegAdminCmd("dg_chuground", DG_Chug_ChugRoundCommand, ADMFLAG_GENERIC);
 
@@ -563,19 +563,15 @@ public ShowDGStats(client, String:plrname[]) {
 }
 
 
-public Action:DG_AddBotsCommand(client, args) {
-	new count = 20;
-	while (count > 0) {
-		decl String:command[50];
-		if (GetRandomFloat() < 0.8) {
-			Format(command, sizeof(command), "tf_bot_add \"[DG] Drinker %i\"", count);
-		}
-		else {
-			Format(command, sizeof(command), "tf_bot_add \"Non Drinker %i\"", count);
-		}
-		ServerCommand(command);
-		count--;
+public Action:DG_AddBotCommand(client, args) {
+	decl String:command[50];
+	if (GetRandomFloat() < 0.6) {
+		Format(command, sizeof(command), "tf_bot_add \"[DG] Drinker\"");
 	}
+	else {
+		Format(command, sizeof(command), "tf_bot_add \"Non Drinker\"");
+	}
+	ServerCommand(command);
 }
 
 public OnGameFrame()
