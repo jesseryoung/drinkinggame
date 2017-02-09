@@ -12,9 +12,11 @@
 
 #include "helpers.sp"
 #include "tf2_extra.sp"
-#include "database.sp"
+// REMOVE Database.sp
+// #include "database.sp"
 #include "effects.sp"
-#include "taunts.sp"
+// REMOVE Taunts.sp
+// #include "taunts.sp"
 #include "balance.sp"
 #include "chug.sp"
 #include "drinks.sp"
@@ -39,16 +41,19 @@ public OnPluginStart()
 	HookEvent("teamplay_round_start",Event_RoundStart);
 	RegConsoleCmd("say",Command_Say);
 	RegConsoleCmd("dg_drinklist",DG_DrinkListCommand);
-	RegConsoleCmd("dg_mytaunt",DG_Taunts_MyTauntCommand);
-	RegConsoleCmd("dg_settaunt",DG_Taunts_SetTauntCommand);
+	// REMOVE Taunt command
+    //RegConsoleCmd("dg_mytaunt",DG_Taunts_MyTauntCommand);
+	//RegConsoleCmd("dg_settaunt",DG_Taunts_SetTauntCommand);
 	RegConsoleCmd("dg_info",DG_InfoCommand);
-	RegConsoleCmd("dg_stats",DG_StatsCommand);
+    // REMOVE Stats command
+    //RegConsoleCmd("dg_stats",DG_StatsCommand);
 	RegConsoleCmd("dg_mystats",DG_Drinks_MyStats);
 	RegAdminCmd("dg_add_bots", DG_AddBotsCommand, ADMFLAG_GENERIC);
 	RegAdminCmd("dg_balance", DG_Balance_CallBalanceCommand, ADMFLAG_GENERIC);
 	RegAdminCmd("dg_chuground", DG_Chug_ChugRoundCommand, ADMFLAG_GENERIC);
 
-	dgStatsURL = CreateConVar("dg_statsurl", "http://stats.team-brh.com/dg", "Web location where DGers can view their stats");
+    // REMOVE Stat URL
+	//dgStatsURL = CreateConVar("dg_statsurl", "http://stats.team-brh.com/dg", "Web location where DGers can view their stats");
 	dgRulesURL = CreateConVar("dg_rulesurl", "http://www.team-brh.com/forums/viewtopic.php?f=8&t=7666", "Web location where rules are posted for when a player types dg_info in chat");
 	dgBottleDeath = CreateConVar("dg_bottledeath", "1", "Spawn bottles based on how many drinks were given on death");
 	dgUnfairBalance = CreateConVar("dg_unfairbalance", "1", "Prevent certain heavy medic pairs from being dg-balanced separated");
@@ -57,9 +62,12 @@ public OnPluginStart()
 	//For findtarget
 	LoadTranslations("common.phrases");
 
-	DG_Database_Connect();
-	DG_Database_LoadWeaponInfo();
+    // REMOVE DG DB Connection
+	// DG_Database_Connect();
+	// DG_Database_LoadWeaponInfo();
 
+    // ADD WEAPON DG INFO LOADING HERE
+    
 	//Turn on holiday mode if month is december
 	new String:date[30];
 	FormatTime(date, sizeof(date), "%b");
@@ -145,6 +153,8 @@ public Action:DG_InfoCommand(int client, args) {
 	return Plugin_Handled;
 }
 
+// REMOVE DG Stats command
+/*
 public Action:DG_StatsCommand(int client, args) {
 	new String:text[128];
 	GetCmdArgString(text, sizeof(text));
@@ -158,6 +168,7 @@ public Action:DG_StatsCommand(int client, args) {
 		ShowDGStats(client, text[nextCmd]);
 	}
 }
+*/
 
 public Action:DG_DrinkListCommand(int client, args) {
 	DG_ReadList(client,0);
@@ -544,6 +555,8 @@ public DG_SortByTotalDrinkCount(elem1, elem2, const array[],Handle:hndl) {
 	}
 }
 
+// REMOVE Show DG Stats
+/*
 public ShowDGStats(client, String:plrname[]) {
 	new String:statsUrl[300];
 	GetConVarString(dgStatsURL,statsUrl,sizeof(statsUrl));
@@ -561,6 +574,7 @@ public ShowDGStats(client, String:plrname[]) {
 		ShowMOTDPanel(client,"DG Stats player",url, MOTDPANEL_TYPE_URL);
 	}
 }
+*/
 
 
 public Action:DG_AddBotsCommand(client, args) {

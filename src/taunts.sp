@@ -1,4 +1,3 @@
-
 new Handle:hUpdateTaunt = INVALID_HANDLE;
 new Handle:hInsertTaunt = INVALID_HANDLE;
 
