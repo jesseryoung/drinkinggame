@@ -12,7 +12,9 @@
 
 #include "helpers.sp"
 #include "tf2_extra.sp"
+#include "database.sp"
 #include "effects.sp"
+#include "taunts.sp"
 #include "balance.sp"
 #include "chug.sp"
 #include "drinks.sp"
@@ -37,13 +39,17 @@ public OnPluginStart()
 	HookEvent("teamplay_round_start",Event_RoundStart);
 	RegConsoleCmd("say",Command_Say);
 	RegConsoleCmd("dg_drinklist",DG_DrinkListCommand);
+	RegConsoleCmd("dg_mytaunt",DG_Taunts_MyTauntCommand);
+	RegConsoleCmd("dg_settaunt",DG_Taunts_SetTauntCommand);
 	RegConsoleCmd("dg_info",DG_InfoCommand);
+	RegConsoleCmd("dg_stats",DG_StatsCommand);
 	RegConsoleCmd("dg_mystats",DG_Drinks_MyStats);
-	RegAdminCmd("dg_add_bots", DG_AddBotsCommand, ADMFLAG_GENERIC);
+	RegAdminCmd("dg_add_bot", DG_AddBotCommand, ADMFLAG_GENERIC);
 	RegAdminCmd("dg_balance", DG_Balance_CallBalanceCommand, ADMFLAG_GENERIC);
 	RegAdminCmd("dg_chuground", DG_Chug_ChugRoundCommand, ADMFLAG_GENERIC);
 
-    dgRulesURL = CreateConVar("dg_rulesurl", "http://www.team-brh.com/forums/viewtopic.php?f=8&t=7666", "Web location where rules are posted for when a player types dg_info in chat");
+	dgStatsURL = CreateConVar("dg_statsurl", "http://stats.team-brh.com/dg", "Web location where DGers can view their stats");
+	dgRulesURL = CreateConVar("dg_rulesurl", "http://www.team-brh.com/forums/viewtopic.php?f=8&t=7666", "Web location where rules are posted for when a player types dg_info in chat");
 	dgBottleDeath = CreateConVar("dg_bottledeath", "1", "Spawn bottles based on how many drinks were given on death");
 	dgUnfairBalance = CreateConVar("dg_unfairbalance", "1", "Prevent certain heavy medic pairs from being dg-balanced separated");
 	dgHolidayMode = CreateConVar("dg_holidaymode", "0", "Drink irresponsibly this holiday season.");
@@ -51,10 +57,9 @@ public OnPluginStart()
 	//For findtarget
 	LoadTranslations("common.phrases");
 
-    // REMOVE DG DB Connection
-	
-    // ADD WEAPON DG INFO LOADING HERE
-    
+	DG_Database_Connect();
+	DG_Database_LoadWeaponInfo();
+
 	//Turn on holiday mode if month is december
 	new String:date[30];
 	FormatTime(date, sizeof(date), "%b");
@@ -138,6 +143,20 @@ public Action:DG_InfoCommand(int client, args) {
 	GetConVarString(dgRulesURL,forumPost,sizeof(forumPost));
 	ShowMOTDPanel(client,"DG Rules",forumPost,MOTDPANEL_TYPE_URL);
 	return Plugin_Handled;
+}
+
+public Action:DG_StatsCommand(int client, args) {
+	new String:text[128];
+	GetCmdArgString(text, sizeof(text));
+	new String:cmd[32];
+	new nextCmd = BreakString(text,cmd,sizeof(cmd));
+	new String:blank[255];
+	if (nextCmd == -1) {
+		ShowDGStats(client, blank);
+	}
+	else {
+		ShowDGStats(client, text[nextCmd]);
+	}
 }
 
 public Action:DG_DrinkListCommand(int client, args) {
@@ -525,19 +544,34 @@ public DG_SortByTotalDrinkCount(elem1, elem2, const array[],Handle:hndl) {
 	}
 }
 
-public Action:DG_AddBotsCommand(client, args) {
-	new count = 20;
-	while (count > 0) {
-		decl String:command[50];
-		if (GetRandomFloat() < 0.8) {
-			Format(command, sizeof(command), "tf_bot_add \"[DG] Drinker %i\"", count);
-		}
-		else {
-			Format(command, sizeof(command), "tf_bot_add \"Non Drinker %i\"", count);
-		}
-		ServerCommand(command);
-		count--;
+public ShowDGStats(client, String:plrname[]) {
+	new String:statsUrl[300];
+	GetConVarString(dgStatsURL,statsUrl,sizeof(statsUrl));
+
+	new String:steam[32];
+	GetClientAuthId(client,AuthId_Steam2,steam,sizeof(steam));
+	if (strlen(plrname) > 0) {
+		new String: url[255];
+		Format(url,sizeof(url),"%s/dgstats.php?name=%s",statsUrl, plrname);
+		ShowMOTDPanel(client,"DG Stats Search",url, MOTDPANEL_TYPE_URL);
 	}
+	else {
+		new String: url[255];
+		Format(url,sizeof(url),"%s/dgstats.php?steam_id=%s",statsUrl, steam);
+		ShowMOTDPanel(client,"DG Stats player",url, MOTDPANEL_TYPE_URL);
+	}
+}
+
+
+public Action:DG_AddBotCommand(client, args) {
+	decl String:command[50];
+	if (GetRandomFloat() < 0.6) {
+		Format(command, sizeof(command), "tf_bot_add \"[DG] Drinker\"");
+	}
+	else {
+		Format(command, sizeof(command), "tf_bot_add \"Non Drinker\"");
+	}
+	ServerCommand(command);
 }
 
 public OnGameFrame()
