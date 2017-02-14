@@ -42,7 +42,6 @@ public OnPluginStart()
 	RegConsoleCmd("dg_mytaunt",DG_Taunts_MyTauntCommand);
 	RegConsoleCmd("dg_settaunt",DG_Taunts_SetTauntCommand);
 	RegConsoleCmd("dg_info",DG_InfoCommand);
-	RegConsoleCmd("dg_mystats",DG_Drinks_MyStats);
 	RegAdminCmd("dg_add_bot", DG_AddBotCommand, ADMFLAG_GENERIC);
 	RegAdminCmd("dg_balance", DG_Balance_CallBalanceCommand, ADMFLAG_GENERIC);
 	RegAdminCmd("dg_chuground", DG_Chug_ChugRoundCommand, ADMFLAG_GENERIC);
