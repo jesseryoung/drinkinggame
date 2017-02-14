@@ -1,4 +1,3 @@
-
 new Handle:hUpdateTaunt = INVALID_HANDLE;
 new Handle:hInsertTaunt = INVALID_HANDLE;
 
@@ -71,6 +70,11 @@ public bool:DG_Taunts_SetTaunt(String:steamID[], String:taunt[]) {
 
 
 public Action:DG_Taunts_SetTauntCommand(int client, args) {
+	//Tell client that the functionality is disabled. Remove these two lines when taunts are good to go again.
+	PrintToChat(client,"%sDG Taunts have been temporarily disabled.",msgColor);
+	return Plugin_Handled;
+
+
 	new String:text[128];
 	GetCmdArgString(text, sizeof(text));
 	if (strlen(text) < 1) {
@@ -91,6 +95,10 @@ public Action:DG_Taunts_SetTauntCommand(int client, args) {
 
 
 public DG_Taunts_GetTaunt(String:steamID[32], String:buf[], bufLen, bool:returnError) {
+	//Taunts are temporarily disabled, so we will return nothing. Remove this line when taunts are good to go.
+	return;
+
+
 	if (StrContains(steamID, "BOT") != -1 ) {
 		return;
 	}
@@ -118,6 +126,11 @@ public DG_Taunts_GetTaunt(String:steamID[32], String:buf[], bufLen, bool:returnE
 }
 
 public Action:DG_Taunts_MyTauntCommand(int client, args) {
+	//Tell client that the functionality is disabled. Remove these two lines when taunts are good to go again.
+	PrintToChat(client,"%sDG Taunts have been temporarily disabled.",msgColor);
+	return Plugin_Handled;
+
+
 	new String:steamID[32];
 	GetClientAuthId(client,AuthId_Steam2,steamID,sizeof(steamID))
 	new String:tag[100];

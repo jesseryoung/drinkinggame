@@ -28,7 +28,6 @@ new String: msgColor[] = "\x04[DG]";
 new dgSprites[MAXPLAYERS + 1];
 new dgSpritesParents[MAXPLAYERS + 1];
 
-new Handle:dgStatsURL;
 new Handle:dgRulesURL;
 new Handle:dgBottleDeath;
 new Handle:dgUnfairBalance;
