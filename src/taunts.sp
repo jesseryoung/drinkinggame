@@ -16,14 +16,14 @@ public bool:DG_Taunts_SetTaunt(String:steamID[], String:taunt[]) {
 	SQL_LockDatabase(db);
 	if (hUpdateTaunt == INVALID_HANDLE) {
 		new String:error[255];
-		hUpdateTaunt = SQL_PrepareQuery(db, "UPDATE dgtaunts SET taunt = ? WHERE Steam_ID = ?", error, sizeof(error));
+		hUpdateTaunt = SQL_PrepareQuery(db, "UPDATE dgtaunts SET taunt = ? WHERE steamid = ?", error, sizeof(error));
 		if (hUpdateTaunt == INVALID_HANDLE){
 			LogError(error);
 		}
 	}
 	if (hInsertTaunt == INVALID_HANDLE) {
 		new String:error[255];
-		hInsertTaunt = SQL_PrepareQuery(db, "INSERT INTO dgtaunts (taunt, Steam_ID) VALUES(?, ?)", error, sizeof(error));
+		hInsertTaunt = SQL_PrepareQuery(db, "INSERT INTO dgtaunts (taunt, steamid) VALUES(?, ?)", error, sizeof(error));
 		if (hInsertTaunt == INVALID_HANDLE){
 			LogError(error);
 		}
@@ -31,7 +31,7 @@ public bool:DG_Taunts_SetTaunt(String:steamID[], String:taunt[]) {
 
 	//Create a query for the DB
 	new String:strQuery[500];
-	Format(strQuery,sizeof(strQuery), "SELECT taunt FROM dgtaunts WHERE Steam_ID = '%s'",steamID);
+	Format(strQuery,sizeof(strQuery), "SELECT taunt FROM dgtaunts WHERE steamid = '%s'",steamID);
 	new Handle:query = SQL_Query(db,strQuery);
 
 	if (query == INVALID_HANDLE) {
@@ -111,7 +111,7 @@ public DG_Taunts_GetTaunt(String:steamID[32], String:buf[], bufLen, bool:returnE
 
 	//Create a query for the DB
 	new String:strQuery[250];
-	Format(strQuery,sizeof(strQuery), "SELECT taunt FROM dgtaunts WHERE Steam_ID = '%s'",steamID);
+	Format(strQuery,sizeof(strQuery), "SELECT taunt FROM dgtaunts WHERE steamid = '%s'",steamID);
 	SQL_LockDatabase(db);
 	new Handle:query = SQL_Query(db,strQuery);
 	SQL_UnlockDatabase(db);

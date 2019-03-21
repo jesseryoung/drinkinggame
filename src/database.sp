@@ -2,10 +2,10 @@ new Handle:db = INVALID_HANDLE;
 
 public DG_Database_Connect() {
 	if (GetConVarBool(dgDebug)) {
-		return;
+		return; 
 	}
 	new String:error[255]
-	db = SQL_Connect("DGGame", true, error, sizeof(error))
+	db = SQLite_UseDatabase("drinkinggame", error, sizeof(error))
 
 	if (db == INVALID_HANDLE) {
 		PrintToServer("Could not connect: %s", error);

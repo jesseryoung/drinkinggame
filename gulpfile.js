@@ -2,12 +2,11 @@ var gulp = require('gulp'),
 	watch = require('gulp-watch'),
 	exec = require('child_process').exec;
 
-
-
 var rcon = require('srcds-rcon')({
-	address: '192.168.1.64',
+	address: '127.0.1.1',
 	password: 'password'
 });
+
 
 gulp.task('watch', function() {
 	return watch('src/**/*.sp', function() {
@@ -19,12 +18,20 @@ gulp.task('watch', function() {
 				return rcon.command('sm plugins refresh').then(() => {
 					console.log('Reloaded plugin over rcon');
 				});
-			}).then(
-				() => rcon.disconnect()
-			).catch(err => {
-				console.log('caught', err);
+			}).then(() => rcon.disconnect()).catch((err) => {
 				console.log(err.stack);
 			});
 		});
 	});
 });
+
+gulp.task('reload', () => {
+	rcon.connect().then(() => {
+		return rcon.command('sm plugins refresh').then(() => {
+			console.log('Reloaded plugin over rcon');
+		});
+	}).then(() => rcon.disconnect())
+	.catch((err) => {
+		console.log(err.stack);
+	});
+})
