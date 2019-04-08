@@ -1,16 +1,16 @@
 
-public Action:DG_Balance_CallBalance(Handle:timer) {
+public Action DG_Balance_CallBalance(Handle timer) {
 	DG_Balance_Timer = INVALID_HANDLE;
 	DG_Balance_PerformBalance();
 }
 
-public bool:DG_Balance_isBalanced() {
-	new RedDGers;
-	new BluDGers;
+public bool DG_Balance_isBalanced() {
+	int RedDGers;
+	int BluDGers;
 
-	for (new i = 1; i <= MaxClients; i ++){
+	for (int i = 1; i <= MaxClients; i ++){
 		if (IsClientInGame(i)) {
-			new String:name[255];
+			char name[255];
 			GetClientName(i, name,sizeof(name));
 			if (DG_IsPlayerPlaying(name)) {
 				if (GetClientTeam(i) == BLU_TEAM) {
@@ -23,20 +23,20 @@ public bool:DG_Balance_isBalanced() {
 		}
 	}
 
-	if (RedDGers == BluDGers || RedDGers == BluDGers +1 || RedDGers == BluDGers -1) {
+	if (RedDGers == BluDGers || RedDGers == BluDGers + 1 || RedDGers == BluDGers - 1) {
 		return true;
 	}
 	return false;
 }
 
-public DG_Balance_PerformBalance() {
-	new Handle:RedIndex = CreateArray(ByteCountToCells(1));
-	new Handle:BluIndex = CreateArray(ByteCountToCells(1));
-	new Handle:NonDG = CreateArray(ByteCountToCells(1));
+public void DG_Balance_PerformBalance() {
+	Handle RedIndex = CreateArray(ByteCountToCells(1));
+	Handle BluIndex = CreateArray(ByteCountToCells(1));
+	Handle NonDG = CreateArray(ByteCountToCells(1));
 
-	new Handle:larger;
-	new largerTeam;
-	new smallerTeam;
+	Handle larger;
+	int largerTeam;
+	int smallerTeam;
 	//Find the larger team to move players from
 	if (GetArraySize(RedIndex) > GetArraySize(BluIndex)) {
 		larger = RedIndex;
@@ -52,15 +52,15 @@ public DG_Balance_PerformBalance() {
 	//Perform the balance
 	while (GetArraySize(NonDG) > 0 && !DG_Balance_isBalanced()) {
 		//Get a random non dger
-		new clientindex = 0;
+		int clientindex = 0;
 		if (GetArraySize(NonDG) > 0) {
 			clientindex = GetRandomInt(0, GetArraySize(NonDG) - 1);
 		}
 		//Get a random DGer from the larger team
-		new dgerindex = GetRandomInt(0, GetArraySize(larger) - 1);
+		int dgerindex = GetRandomInt(0, GetArraySize(larger) - 1);
 
-		new client = GetArrayCell(NonDG, clientindex);
-		new dger = GetArrayCell(larger, dgerindex);
+		int client = GetArrayCell(NonDG, clientindex);
+		int dger = GetArrayCell(larger, dgerindex);
 
 		if (!IsClientConnected(client) || !IsClientInGame(client)){
 			RemoveFromArray(NonDG, clientindex);
@@ -75,14 +75,14 @@ public DG_Balance_PerformBalance() {
 
 		//Unfair balance
 		if (GetConVarBool(dgUnfairBalance)) {
-			new String:steam[32];
+			char steam[32];
 			GetClientAuthId(dger,AuthId_Steam2,steam,sizeof(steam));
 			if (StrContains(steam,"STEAM_0:0:22399196",false) != -1 || StrContains(steam,"STEAM_0:0:20604342",false) != -1) {
-				new bool:both = false;
-				for (new i = 0; i < GetArraySize(larger); i++) {
-					new teamClient = GetArrayCell(larger, i);
+				bool both = false;
+				for (int i = 0; i < GetArraySize(larger); i++) {
+					int teamClient = GetArrayCell(larger, i);
 					if (teamClient == dger) continue;
-					new String:steam2[32];
+					char steam2[32];
 					GetClientAuthId(teamClient,AuthId_Steam2,steam2,sizeof(steam));
 					if (StrContains(steam2,"STEAM_0:0:22399196",false) != -1 || StrContains(steam2,"STEAM_0:0:20604342",false) != -1) {
 						both = true;
@@ -93,8 +93,8 @@ public DG_Balance_PerformBalance() {
 			}
 		}
 
-		new String:name[255];
-		new String:teamName[4];
+		char name[255];
+		char teamName[4];
 		GetClientName(dger,name,sizeof(name));
 		ChangeClientTeam(dger,smallerTeam);
 		TF2_RespawnPlayer(dger);
@@ -113,7 +113,7 @@ public DG_Balance_PerformBalance() {
 }
 
 
-public Action:DG_Balance_CallBalanceCommand(client1, args) {
+public Action DG_Balance_CallBalanceCommand(int client1, int args) {
 	//Tally up the DGer's
 
 	if (DG_Balance_isBalanced()) {
