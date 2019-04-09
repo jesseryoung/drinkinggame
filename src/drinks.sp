@@ -41,7 +41,9 @@ public void DG_Drinks_EndBuildingDrinks(int client) {
 }
 
 stock void DG_Drinks_GivePlayerDeathDrinks(Handle event, const char[] name) {
-	PrintToServer("Start Drink Giving");
+	if(debugInfo) {
+		PrintToServer("Start Drink Giving");
+	}
 	//// Drink Giving Setup
 	
 	// Determine if building or DG player was destroyed
@@ -52,10 +54,13 @@ stock void DG_Drinks_GivePlayerDeathDrinks(Handle event, const char[] name) {
 	if (victim.client == 0 || !victim.dg) { return; }	// Bail if no victim or victim is not DG player
 	DGPlayer attacker; attacker.Init(event, "attacker");
 	DGPlayer assister; assister.Init(event, "assister");
-	PrintToServer("victim id=%d client=%d name=%s dg=%d",victim.id,victim.client,victim.name,victim.dg);
-	PrintToServer("attacker id=%d client=%d name=%s dg=%d",attacker.id,attacker.client,attacker.name,attacker.dg);
-	PrintToServer("assister id=%d client=%d name=%s dg=%d",assister.id,assister.client,assister.name,assister.dg);
-
+	
+	if(debugInfo){
+		PrintToServer("victim id=%d client=%d name=%s dg=%d",victim.id,victim.client,victim.name,victim.dg);
+		PrintToServer("attacker id=%d client=%d name=%s dg=%d",attacker.id,attacker.client,attacker.name,attacker.dg);
+		PrintToServer("assister id=%d client=%d name=%s dg=%d",assister.id,assister.client,assister.name,assister.dg);
+	}
+	
 	// Get customkill value
 	int customkill = GetEventInt(event, "customkill");
 	
@@ -144,7 +149,9 @@ stock void DG_Drinks_GivePlayerDeathDrinks(Handle event, const char[] name) {
 
 	// Add one for DG attacker
 	if (attacker.dg) {
-		PrintToServer("Killed by DG");
+		if(debugInfo){
+			PrintToServer("Killed by DG");
+		}
 		int attackDrinks = 1;
 		//Add one for attacker drinks caused
 		atDrinkCount += attackDrinks;
@@ -352,7 +359,10 @@ stock void DG_Drinks_GivePlayerDeathDrinks(Handle event, const char[] name) {
 	//Suicides
 	if (victim.client == attacker.client) {
 		do {
-			PrintToServer("Drinks for suicide");
+			if(debugInfo){
+				PrintToServer("Drinks for suicide");
+			}
+			
 			int suicideDrinks = 2;
 			drinkCount += suicideDrinks;
 			atDrinkCount = 0;	// Clear any accrued attacker drinks
@@ -398,20 +408,24 @@ stock void DG_Drinks_GivePlayerDeathDrinks(Handle event, const char[] name) {
 	TotalDrinks[victim.client] += drinkCount;
 	GivenDrinks[attacker.client] += atDrinkCount;
 	GivenDrinks[assister.client] += asDrinkCount;
-	PrintToServer("Final drink count: %d", drinkCount);
+	
+	if (debugInfo) {
+		PrintToServer("Final drink count: %d", drinkCount);
+	}
+	
 	// Display death drink message if drinks were accrued
 	if (drinkCount > 0) {
 		DG_Msg_DeathDrink(victim.client, reason, drinkCount);
 		
 		// Display drink total to attacker and assister
-		if (assister.dg) {
-			if (victim.client != attacker.client) {
+		if (assister.dg && assister.client > 0) {
+			if (victim.client != attacker.client && attacker.client > 0) {
 				PrintToChat(attacker.client, "%sYou and %s made %s drink %d. Good job!",msgColor,assister.name,victim.name,drinkCount);		
 			}
 			PrintToChat(assister.client, "%s%s and You made %s drink %d. Good job!",msgColor,attacker.name,victim.name,drinkCount);	
 		}
 		else {
-			if (victim.client != attacker.client) {
+			if (victim.client != attacker.client && attacker.client > 0) {
 				PrintToChat(attacker.client,"%sYou made %s drink %d. Good job!",msgColor, victim.name,drinkCount);	
 			}
 		}

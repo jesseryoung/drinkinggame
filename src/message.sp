@@ -8,7 +8,10 @@ enum struct DrinkWindow {
 		this.drinks = 0;
 		this.client = toClient;
 		this.panel = CreatePanel();
-		PrintToServer("Drink window created");
+		
+		if(debugInfo){
+			PrintToServer("Drink window created");
+		}
 	}
 	
 	void AddTextMessage(char[] message) {
@@ -26,21 +29,27 @@ enum struct DrinkWindow {
 	}
 	
 	void AddDrinkMessage(int addDrinks, char[] message) {
-		PrintToServer("Adding drink message");
+		if(debugInfo){
+			PrintToServer("Adding drink message");
+		}
 		this.drinks += addDrinks;
 		Format(this.panelBuffer,100,message,addDrinks);
 		DrawPanelText(this.panel, this.panelBuffer);
 	}
 	
 	void AddFormatDrinkMessage(int addDrinks, char[] message, char[] formatValue) {
-		PrintToServer("Adding formatted drink message");
+		if(debugInfo){
+			PrintToServer("Adding formatted drink message");
+		}
 		this.drinks += addDrinks;
 		Format(this.panelBuffer,100,message,addDrinks,formatValue);	// Format drink count into string first
 		DrawPanelText(this.panel, this.panelBuffer);
 	}
 	
 	void Display() {
-		PrintToServer("Displaying drink window");
+		if(debugInfo){
+			PrintToServer("Displaying drink window");
+		}
 		DrawPanelText(this.panel,"--------------------------------");
 		Format(this.panelBuffer,100,"Total: %d",this.drinks);
 		DrawPanelText(this.panel, this.panelBuffer);

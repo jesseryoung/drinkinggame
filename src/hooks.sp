@@ -9,11 +9,14 @@ public void HookEvents_Init() {
 
 enum struct Name {
 	char name[32];
+	bool isPlaying;
 	
 	void Init(int client) {
 		char nameBuf[32];
 		GetClientName(client, nameBuf, sizeof(nameBuf));
 		strcopy(this.name, 32, nameBuf);
+		this.isPlaying = false;
+		this.IsPlayingUpdate();
 	}
 	
 	void EventInit(Handle event, const char[] eventName) {
@@ -22,19 +25,21 @@ enum struct Name {
 		strcopy(this.name, 32, nameBuf);
 	}
 	
-	bool IsPlaying() {
-		return DG_IsPlayerPlaying(this.name);
+	void IsPlayingUpdate() {
+		this.isPlaying = false;
+		this.isPlaying = DG_IsPlayerPlaying(this.name);
 	}
 }
 
 void Event_CreateSprite(int client) {
-	// Get team's DG sprite
 	int team = GetClientTeam(client);
-	char sprite[24];
-	strcopy(sprite, 24, (team == RED_TEAM) ? DG_SPRITE_RED_VMT : DG_SPRITE_BLU_VMT);
 	
-	// Create DG sprite
-	DG_Effects_CreateSprite(client, sprite);
+	if (team == RED_TEAM) {
+		DG_Effects_CreateSprite(client, DG_SPRITE_RED_VMT);
+	}
+	else if (team == BLU_TEAM) {
+		DG_Effects_CreateSprite(client, DG_SPRITE_BLU_VMT);
+	}
 }
 
 public void Event_PlayerChangeName(Handle event, const char[] name, bool dontBroadcast) {
@@ -47,9 +52,9 @@ public void Event_PlayerChangeName(Handle event, const char[] name, bool dontBro
 	if (!IsPlayerAlive(client)) { return; }
 	
 	//If they have started DGin
-	if (newName.IsPlaying() && !GetConVarBool(dgDebug)) {
+	if (newName.isPlaying && !GetConVarBool(dgDebug)) {
 		// Return if was already DGing
-		if (oldName.IsPlaying()) { return; }
+		if (oldName.isPlaying) { return; }
 		
 		Event_CreateSprite(client);
 	} 
@@ -68,7 +73,7 @@ public void Event_PlayerSpawn(Handle event, const char[] name, bool dontBroadcas
 	Name playerName; playerName.Init(client);
 
 	//If they are DG'n put a sprite above their heads
-	if (playerName.IsPlaying()) {
+	if (playerName.isPlaying) {
 		Event_CreateSprite(client);
 	}
 }
@@ -117,7 +122,7 @@ public void Event_RoundWin(Handle event, const char[] name, bool dontBroadcast) 
 		//Get player Name
 		Name playerName; playerName.Init(client);
 		// Skip player if not DG player
-		if (playerName.IsPlaying()) { continue; }
+		if (playerName.isPlaying) { continue; }
 		
 		// Display drink messages to DG players
 		DG_Msg_NoDrinkers(client, drinkers);

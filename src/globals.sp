@@ -38,6 +38,7 @@ int MedicDrinks[MAXPLAYERS + 1];
 int GivenDrinks[MAXPLAYERS + 1];
 
 bool canChugRound = true;
+bool debugInfo = false;
 
 int gVelocityOffset;
 
