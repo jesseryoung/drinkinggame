@@ -1,9 +1,9 @@
-stock TF2_GetHealingTarget(client) {
-	new String:classname[64];
+stock int TF2_GetHealingTarget(int client) {
+	char classname[64];
 	TF2_GetCurrentWeaponClass(client, classname, sizeof(classname));
 
 	if(StrEqual(classname, "CWeaponMedigun"))	{
-		new index = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
+		int index = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
 		if(GetEntProp(index, Prop_Send, "m_bHealing") == 1) {
 			return GetEntPropEnt(index, Prop_Send, "m_hHealingTarget");
 		}
@@ -12,33 +12,33 @@ stock TF2_GetHealingTarget(client) {
 	return -1;
 }
 
-stock TF2_GetCurrentWeaponClass(client, String:name[], maxlength) {
+stock void TF2_GetCurrentWeaponClass(int client, char[] name, int maxlength) {
 	if(client > 0) {
-		new index = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
+		int index = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
 		if (index > 0)
 			GetEntityNetClass(index, name, maxlength);
 	}
 }
 
-stock TF2_GetCurrentWeapon(client) {
+stock int TF2_GetCurrentWeapon(int client) {
 	if(client > 0) {
-		new weaponIndex = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
+		int weaponIndex = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
 		return weaponIndex;
 	}
 
 	return -1;
 }
 
-stock TF2_GetWeaponClass(index, String:name[], maxlength) {
+stock void TF2_GetWeaponClass(int index, char[] name, int maxlength) {
 	if (index > 0)
 		GetEntityNetClass(index, name, maxlength);
 }
 
-stock TF2_GetPlayerUberLevel(client) {
-	new index = GetPlayerWeaponSlot(client, 1);
+stock int TF2_GetPlayerUberLevel(int client) {
+	int index = GetPlayerWeaponSlot(client, 1);
 
 	if (index > 0) {
-		new String:classname[64];
+		char classname[64];
 		TF2_GetWeaponClass(index, classname, sizeof(classname));
 
 		if(StrEqual(classname, "CWeaponMedigun")) {
