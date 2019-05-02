@@ -104,36 +104,6 @@ public void Event_RoundStart(Handle event, const char[] name, bool dontBroadcast
 }
 
 public void Event_RoundWin(Handle event, const char[] name, bool dontBroadcast) {
-	int team = GetEventInt(event,"team")
-
-	// See if there are any drinkers that round
-	bool drinkers = false;
-	for (int client = 1; client <= MaxClients; client++) {
-		if (TotalDrinks[client] > 0) {
-			drinkers = true;
-		}
-	}
-
-	//Loop through all clients
-	for (int client = 1; client <= MaxClients; client++) {
-		//Make sure client is connected
-		if (!IsClientInGame(client)) { continue; }
-
-		//Get player Name
-		Name playerName; playerName.Init(client);
-		// Skip player if not DG player
-		if (playerName.isPlaying) { continue; }
-		
-		// Display drink messages to DG players
-		DG_Msg_NoDrinkers(client, drinkers);
-		DG_Msg_LosingTeam(client, team);
-		// Display special drink categories
-		DG_Drinks_EndDRDrinks(client);
-		DG_Drinks_EndBuildingDrinks(client);
-	}
-	
-	// Display top 5 drinkers
-	DG_Msg_TopDrinkers(drinkers);
 
 	// Reset drink totals
 	for (int client = 1; client <= MaxClients; client++) {
