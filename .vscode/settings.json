@@ -1,0 +1,5 @@
+{
+    "sourcepawn.MainPath": "/workspaces/drinkinggame/src/dgplugin.sp",
+    "sourcepawn.SourcemodHome": "/addons/sourcemod/scripting/include/",
+    "sourcepawn.SpcompPath": "/addons/sourcemod/scripting/spcomp64"
+}

@@ -1,0 +1,48 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build",
+            "type": "process",
+            "command": "/addons/sourcemod/scripting/spcomp64",
+            "args": [
+                "/workspaces/drinkinggame/src/dgplugin.sp",
+                "-o/workspaces/drinkinggame/dist/dgplugin.smx",
+                "-i/addons/sourcemod/scripting/include/",
+                "-i/workspaces/drinkinggame/src/include",
+                "-i/workspaces/drinkinggame/src",
+            ]
+        },
+        {
+            "label": "Deploy",
+            "type": "process",
+            "command": "docker",
+            "args": [
+                "cp",
+                "/workspaces/drinkinggame/dist/dgplugin.smx",
+                "game-servers-tf2-1:/steam/game/tf/addons/sourcemod/plugins/"
+            ],
+            "dependsOn": [
+                "Build"
+            ]
+        },
+        {
+            "label": "Reload Plugin",
+            "type": "process",
+            "command": "docker",
+            "args": [
+                "exec",
+                "game-servers-tf2-1",
+                "bash",
+                "-c",
+                "echo -e \"sm plugins reload dgplugin.smx\n\" > /console/tf2/console.in",
+            ],
+            "dependsOn": [
+                "Deploy"
+            ],
+            "isBuildCommand": true
+        }
+    ]
+}

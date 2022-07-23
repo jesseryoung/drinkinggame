@@ -1,4 +1,2 @@
 *.smx
-sourcemod/
-secrets/
-node_modules/
+dist/

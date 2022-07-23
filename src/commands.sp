@@ -1,78 +1,53 @@
-public void ConsoleCmds_Init() {
-	// Console Commands
-	RegConsoleCmd("say",Command_Say);
-	RegConsoleCmd("dg_drinklist",DG_DrinkListCommand);
-	RegConsoleCmd("dg_info",DG_InfoCommand);
-	
-	// Admin Commands
-	RegAdminCmd("dg_add_bot", DG_AddBotCommand, ADMFLAG_GENERIC);
-	RegAdminCmd("dg_balance", DG_Balance_CallBalanceCommand, ADMFLAG_GENERIC);
-	RegAdminCmd("dg_chuground", DG_Chug_ChugRoundCommand, ADMFLAG_GENERIC);
+#include <sdktools>
+
+public void RegisterCommands()
+{
+	RegServerCmd("player_drinks", Command_Drink);
 }
 
-//// Console Commands
-
-public Action Command_Say(int client, int args) {
-	char text[200];
-	GetCmdArgString(text,sizeof(text));
-	StripQuotes(text);
-	//Just leave if the console says something
-	if (client == 0) {
+public Action Command_Drink(int args)
+{
+	if (args != 3)
+	{
+		// Exit without required number of args
 		return Plugin_Continue;
 	}
 
-	char forumPost[300];
-	GetConVarString(dgRulesURL,forumPost,sizeof(forumPost));
+	int client_id = GetCmdArgInt(1);
 
-	if (StrContains(text, "dg",false) != -1 || StrContains(text, "dcg",false) != -1
-		|| StrContains(text, "sg",false) != -1 || StrContains(text, "scg",false) != -1) {
-		if (StrContains(text, "what is",false) != -1)
-			ShowMOTDPanel(client,"DG Rules",forumPost,MOTDPANEL_TYPE_URL);
-		else if (StrContains(text, "wat is",false) != -1)
-			ShowMOTDPanel(client,"DG Rules",forumPost,MOTDPANEL_TYPE_URL);
-		else if (StrContains(text, "wtf is",false) != -1)
-			ShowMOTDPanel(client,"DG Rules",forumPost,MOTDPANEL_TYPE_URL);
-		else if (StrContains(text, "why do you have",false) != -1)
-			ShowMOTDPanel(client,"DG Rules",forumPost,MOTDPANEL_TYPE_URL);
-		else if (StrContains(text, "how to",false) != -1)
-			ShowMOTDPanel(client,"DG Rules",forumPost,MOTDPANEL_TYPE_URL);
-		else if (StrContains(text, "how do",false) != -1)
-			ShowMOTDPanel(client,"DG Rules",forumPost,MOTDPANEL_TYPE_URL);
+	if (client_id == 0 || IsClientConnected(client_id) == false)
+	{
+		// Exit if client isn't even in the game
+		return Plugin_Continue;
 	}
 
-	//If they're trying to run a dg command, run it as a client command as if they entered it in console
-	if (StrContains(text, "dg_", false) != -1) {
-		ClientCommand(client, text);
+	char steam_id[MAX_AUTHID_LENGTH];
+	GetCmdArg(2, steam_id, sizeof(steam_id));
+
+	char client_steam_id[MAX_AUTHID_LENGTH];
+	GetClientAuthId(client_id, AuthId_SteamID64, client_steam_id, sizeof(client_steam_id));
+
+	if (strcmp(steam_id, client_steam_id) != 0)
+	{
+		// Steam id didn't match, probably not the same person
+		return Plugin_Continue;
 	}
+
+	char message[1024];
+	GetCmdArg(3, message, sizeof(message));
+
+	EmitSoundToClient(client_id, g_drink_sound);
+
+	Panel panel = new Panel();
+	panel.SetTitle("Drink Bitch");
+	panel.DrawText(message);
+	panel.Send(client_id, PanelHandler, 10);
+	delete panel;
 
 	return Plugin_Continue;
 }
 
-public Action DG_DrinkListCommand(int client, int args) {
-	DG_ReadList(client,0);
-	return Plugin_Handled;
-}
-
-public Action DG_InfoCommand(int client, int args) {
-	char forumPost[300];
-	GetConVarString(dgRulesURL,forumPost,sizeof(forumPost));
-	ShowMOTDPanel(client,"DG Rules",forumPost,MOTDPANEL_TYPE_URL);
-	return Plugin_Handled;
-}
-
-//// Admin Commands
-
-public Action DG_AddBotCommand(int client, int args) {
-	char command[50];
-	if (GetRandomFloat() < 0.6) {
-		Format(command, sizeof(command), "tf_bot_add \"[DG] Drinker\"");
-	}
-	else {
-		Format(command, sizeof(command), "tf_bot_add \"Non Drinker\"");
-	}
-	ServerCommand(command);
-}
-
-public Action DG_Chug_ChugRoundCommand(int client, int args) {
-	return DG_Chug_ChugRound(client, args);
+public int PanelHandler(Menu menu, MenuAction action, int param1, int param2)
+{
+	return 0;
 }
