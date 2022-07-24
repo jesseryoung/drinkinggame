@@ -7,13 +7,11 @@ public void RegisterCommands()
 
 public Action Command_Drink(int args)
 {
-	if (args != 3)
-	{
-		// Exit without required number of args
-		return Plugin_Continue;
-	}
+	char command[1024 * 10];
+	GetCmdArgString(command, sizeof(command));
+	JSON_Object obj = json_decode(command);
 
-	int client_id = GetCmdArgInt(1);
+	int client_id = obj.GetInt("client_id");
 
 	if (client_id == 0 || IsClientConnected(client_id) == false)
 	{
@@ -22,7 +20,7 @@ public Action Command_Drink(int args)
 	}
 
 	char steam_id[MAX_AUTHID_LENGTH];
-	GetCmdArg(2, steam_id, sizeof(steam_id));
+	obj.GetString("steam_id", steam_id, sizeof(steam_id));
 
 	char client_steam_id[MAX_AUTHID_LENGTH];
 	GetClientAuthId(client_id, AuthId_SteamID64, client_steam_id, sizeof(client_steam_id));
@@ -33,14 +31,18 @@ public Action Command_Drink(int args)
 		return Plugin_Continue;
 	}
 
-	char message[1024];
-	GetCmdArg(3, message, sizeof(message));
-
 	EmitSoundToClient(client_id, g_drink_sound);
 
 	Panel panel = new Panel();
 	panel.SetTitle("Drink Bitch");
-	panel.DrawText(message);
+	JSON_Array messages = view_as<JSON_Array>(obj.GetObject("messages"));
+	for (int i = 0; i < messages.Length; i++)
+	{
+		char message[1024];
+		messages.GetString(i, message, sizeof(message));
+		panel.DrawText(message);
+	}
+
 	panel.Send(client_id, PanelHandler, 10);
 	delete panel;
 
