@@ -22,7 +22,7 @@
             "args": [
                 "cp",
                 "/workspaces/drinkinggame/dist/dgplugin.smx",
-                "game-servers-tf2-1:/steam/game/tf/addons/sourcemod/plugins/"
+                "game-servers_tf2_1:/steam/game/tf/addons/sourcemod/plugins/"
             ],
             "dependsOn": [
                 "Build"
@@ -34,7 +34,7 @@
             "command": "docker",
             "args": [
                 "exec",
-                "game-servers-tf2-1",
+                "game-servers_tf2_1",
                 "bash",
                 "-c",
                 "echo -e \"sm plugins reload dgplugin.smx\n\" > /console/tf2/console.in",
