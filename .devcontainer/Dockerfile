@@ -8,12 +8,12 @@ FROM mcr.microsoft.com/vscode/devcontainers/base:0-${VARIANT}
 ENV SOURCEMOD_DIR "/addons"
 RUN mkdir $SOURCEMOD_DIR \
     && cd $SOURCEMOD_DIR \
-    && curl -sL "https://mms.alliedmods.net/mmsdrop/1.11/mmsource-1.11.0-git1148-linux.tar.gz" | tar -xz addons --strip-components 1 \
-    && curl -sL "https://sm.alliedmods.net/smdrop/1.11/sourcemod-1.11.0-git6906-linux.tar.gz" | tar -xz addons --strip-components 1
+    && curl -sL "https://mms.alliedmods.net/mmsdrop/1.12/mmsource-1.12.0-git1219-linux.tar.gz" | tar -xz addons --strip-components 1 \
+    && curl -sL "https://sm.alliedmods.net/smdrop/1.12/sourcemod-1.12.0-git7210-linux.tar.gz" | tar -xz addons --strip-components 1
 
 
 RUN mkdir /tmp/plugin \
     && cd /tmp/plugin \
-    && curl -sL "https://github.com/clugg/sm-json/archive/refs/tags/v4.1.1.tar.gz" | tar -xz --strip-components 1 \
+    && curl -sL "https://github.com/clugg/sm-json/archive/refs/tags/v5.0.1.tar.gz" | tar -xz --strip-components 1 \
     && cp -R addons/* $SOURCEMOD_DIR/ \
     && rm -rf /tmp/plugin
